@@ -66,6 +66,9 @@ async function fetchPrices() {
 fetchPrices();
 setInterval(fetchPrices, 60000);
 
+// Trade access flag — true when member is logged in
+let _tradeAccessGranted = false;
+
 // LANGUAGE
 let currentLang = 'vi';
 function setLang(lang) {
@@ -291,14 +294,36 @@ function getPeriodLabel(m, y, prefix) {
   return prefix ? prefix + label : label;
 }
 
+// Parse trade date string into {day, m, y} — handles DD/MM, ISO YYYY-MM-DD, Excel serial
+function parseTradeDate(dStr, fallbackM, fallbackY) {
+  if (!dStr && dStr !== 0) return { day: 1, m: fallbackM, y: fallbackY };
+  const s = String(dStr).trim();
+  // DD/MM or DD/M  (hardcoded data: "17/07", "13/1")
+  if (s.includes('/')) {
+    const p = s.split('/');
+    const d = parseInt(p[0]);
+    if (d >= 1 && d <= 31) return { day: d, m: fallbackM, y: fallbackY };
+  }
+  // ISO: YYYY-MM-DD
+  const iso = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if (iso) return { day: parseInt(iso[3]), m: parseInt(iso[2]), y: parseInt(iso[1]) };
+  // Excel serial number (e.g. 45838 = 2025-07-01)
+  const n = Number(s);
+  if (!isNaN(n) && n > 40000 && n < 60000 && !s.includes('-')) {
+    const dt = new Date(Math.round((n - 25569) * 864e5));
+    return { day: dt.getUTCDate(), m: dt.getUTCMonth() + 1, y: dt.getUTCFullYear() };
+  }
+  return { day: 1, m: fallbackM, y: fallbackY };
+}
+
 function updateDashboard() {
   const m = parseInt(document.getElementById('filterMonth').value);
   const y = parseInt(document.getElementById('filterYear').value);
   const filtered = allTrades.filter(t => (m === 0 || t.m === m) && (y === 0 || t.y === y));
 
-  // Update table — columns: Ngày, Cặp, Kết Quả, LN (%), Tháng
+  // Update table — Year → Month → Week 3-level accordion (all collapsed by default)
   const tbody = document.querySelector('.trade-table tbody');
-  if(filtered.length === 0) {
+  if (filtered.length === 0) {
     tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:2rem">' + (currentLang==='vi'?'Không có dữ liệu cho khoảng thời gian này':'No data for this period') + '</td></tr>';
   } else {
     const display = filtered.slice().sort((a, b) => {
@@ -390,7 +415,7 @@ function updateDashboard() {
   }
 
   // Update metrics from monthly summaries
-  let totalLenh=0, totalThang=0, totalThua=0, totalLN=0, lnCount=0;
+  let totalLenh=0,totalThang=0,totalThua=0,totalLN=0,lnCount=0;
   Object.entries(monthSummary).forEach(([key, s]) => {
     const [mo, yr] = key.split('-').map(Number);
     if((m === 0 || mo === m) && (y === 0 || yr === y)) {
@@ -425,6 +450,7 @@ function updateDashboard() {
   const suffix = (m===0 && y===0) ? '' : ` — ${m!==0?mLabel:''} ${y!==0?y:''}`.trim();
   titleEl.textContent = base + suffix;
 }
+
 
 
 
@@ -563,6 +589,7 @@ window._supabase = window.supabase.createClient(
   { auth: { persistSession: true, autoRefreshToken: true, storageKey: 'botoc_member' } }
 );
 
+// UID / exchange helpers
 function selectUidStatus(btn, value) {
   document.querySelectorAll('#m-inp-uid-group .pill-chip').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
@@ -1045,6 +1072,7 @@ function navShow(el) { if (el) { el.style.setProperty('display', 'flex', 'import
 function navHide(el) { if (el) { el.style.setProperty('display', 'none', 'important'); } }
 
 function setMemberLoggedIn(user) {
+  _tradeAccessGranted = true;
   // Desktop
   navHide(document.getElementById('nav-login-li'));
   navHide(document.getElementById('nav-join-li'));
@@ -1063,8 +1091,10 @@ function setMemberLoggedIn(user) {
   if (mobLogin)  mobLogin.style.setProperty('display','none','important');
   if (mobMember) mobMember.style.setProperty('display','block','important');
   if (mobEmail)  mobEmail.textContent = email;
+  initKnowledgeSection();
 }
 function setMemberLoggedOut() {
+  _tradeAccessGranted = false;
   // Desktop
   navShow(document.getElementById('nav-login-li'));
   navShow(document.getElementById('nav-join-li'));
@@ -1078,6 +1108,7 @@ function setMemberLoggedOut() {
   if (mobJoin)   mobJoin.style.removeProperty('display');
   if (mobLogin)  mobLogin.style.setProperty('display','flex','important');
   if (mobMember) mobMember.style.setProperty('display','none','important');
+  hideKnowledgeSection();
 }
 function toggleMemberMenu(e) {
   e.stopPropagation();
@@ -1285,7 +1316,233 @@ document.addEventListener('DOMContentLoaded', async function() {
   // Close login modal on backdrop click
   const mlModal = document.getElementById('member-login-modal');
   if (mlModal) mlModal.addEventListener('click', e => { if (e.target === mlModal) closeMemberLogin(); });
+
+  // Load daily news strip
+  loadDailyNews();
 });
+
+// ════════════════════════════════
+// ══════════════════════════════════════════════════════════
+//  TIN TỨC HẰNG NGÀY  —  full-width carousel
+// ══════════════════════════════════════════════════════════
+var _dnnItems = [];
+var _dnnIdx = 0;       // current strip index
+var _dnnModalIdx = 0;  // current modal index
+
+// ── Load from Supabase ───────────────────────────────────
+async function loadDailyNews() {
+  var track = document.getElementById('dnn-track');
+  if (!track) return;
+  if (!window._supabase) {
+    track.innerHTML = '<div class="dnn-empty">Chưa kết nối dữ liệu.</div>';
+    return;
+  }
+  try {
+    var res = await window._supabase
+      .from('daily_news')
+      .select('*')
+      .eq('status', 'published')
+      .order('news_date', { ascending: false })
+      .limit(30);
+    if (res.error) throw res.error;
+    _dnnItems = res.data || [];
+    renderDailyNews(_dnnItems);
+  } catch(e) {
+    track.innerHTML = '<div class="dnn-empty">Không tải được tin tức.</div>';
+  }
+}
+
+// ── Render cards ─────────────────────────────────────────
+function renderDailyNews(items) {
+  var track = document.getElementById('dnn-track');
+  var dotsEl = document.getElementById('dnn-dots');
+  if (!track) return;
+  _dnnIdx = 0;
+  if (!items || items.length === 0) {
+    track.innerHTML = '<div class="dnn-empty">Chưa có tin tức hằng ngày.</div>';
+    if (dotsEl) dotsEl.innerHTML = '';
+    return;
+  }
+  track.innerHTML = items.map(function(item, idx) {
+    var d = item.news_date ? new Date(item.news_date + 'T00:00:00') : null;
+    var dateStr = d ? ('0'+d.getDate()).slice(-2)+'/'+('0'+(d.getMonth()+1)).slice(-2)+'/'+d.getFullYear() : '';
+    return '<div class="dnn-card" onclick="openDnnModal('+idx+')" role="button" tabindex="0" draggable="false">'
+      + '<img src="'+escHtml(item.image_url || '')+'" alt="" loading="lazy" draggable="false">'
+      + '<div class="dnn-card-foot">'
+      + '<div class="dnn-card-date">'+dateStr+'</div>'
+      + '<div class="dnn-card-ttl">'+escHtml(item.title || '')+'</div>'
+      + '</div></div>';
+  }).join('');
+
+  // Build dots
+  if (dotsEl) {
+    dotsEl.innerHTML = items.map(function(_, i) {
+      return '<button class="dnn-dot'+(i===0?' active':'')+'" onclick="dnnSetIdx('+i+')" aria-label="'+(i+1)+'"></button>';
+    }).join('');
+  }
+
+  dnnUpdateArrows();
+  dnnInitDrag();
+}
+
+// ── Set strip position ────────────────────────────────────
+function dnnSetIdx(idx) {
+  var track = document.getElementById('dnn-track');
+  if (!track) return;
+  idx = Math.max(0, Math.min(_dnnItems.length - 1, idx));
+  _dnnIdx = idx;
+  track.style.transform = 'translateX(-' + (idx * 100) + '%)';
+  // Update dots
+  document.querySelectorAll('#dnn-dots .dnn-dot').forEach(function(d, i) {
+    d.classList.toggle('active', i === idx);
+  });
+  dnnUpdateArrows();
+}
+
+function dnnNav(dir) { dnnSetIdx(_dnnIdx + dir); }
+
+function dnnUpdateArrows() {
+  var prev = document.getElementById('dnn-arr-prev');
+  var next = document.getElementById('dnn-arr-next');
+  if (prev) prev.disabled = _dnnIdx === 0;
+  if (next) next.disabled = _dnnIdx >= _dnnItems.length - 1;
+}
+
+// ── Drag support (mouse + touch) on strip ────────────────
+function dnnInitDrag() {
+  var track = document.getElementById('dnn-track');
+  if (!track || track._dnnDrag) return;
+  track._dnnDrag = true;
+
+  var startX = 0, dragging = false, moved = false;
+
+  function trackW() { return track.parentElement ? track.parentElement.offsetWidth : 320; }
+  function applyDrag(dx) {
+    track.style.transform = 'translateX(calc(-' + (_dnnIdx * 100) + '% + ' + dx + 'px))';
+  }
+
+  // Touch
+  track.addEventListener('touchstart', function(e) {
+    startX = e.touches[0].clientX;
+    track.classList.add('no-anim');
+  }, { passive: true });
+  track.addEventListener('touchmove', function(e) {
+    applyDrag(e.touches[0].clientX - startX);
+  }, { passive: true });
+  track.addEventListener('touchend', function(e) {
+    track.classList.remove('no-anim');
+    var dx = e.changedTouches[0].clientX - startX;
+    if (Math.abs(dx) > 50) dnnNav(dx < 0 ? 1 : -1);
+    else dnnSetIdx(_dnnIdx);
+  });
+
+  // Mouse drag
+  track.addEventListener('mousedown', function(e) {
+    if (e.target.tagName === 'BUTTON' || e.target.tagName === 'A') return;
+    dragging = true; moved = false;
+    startX = e.clientX;
+    track.classList.add('no-anim');
+    e.preventDefault();
+  });
+  document.addEventListener('mousemove', function(e) {
+    if (!dragging) return;
+    moved = true;
+    applyDrag(e.clientX - startX);
+  });
+  document.addEventListener('mouseup', function(e) {
+    if (!dragging) return;
+    dragging = false;
+    track.classList.remove('no-anim');
+    var dx = e.clientX - startX;
+    if (moved && Math.abs(dx) > 50) dnnNav(dx < 0 ? 1 : -1);
+    else dnnSetIdx(_dnnIdx);
+    moved = false;
+  });
+}
+
+// ── Open modal at index ───────────────────────────────────
+function openDnnModal(idx) {
+  _dnnModalIdx = idx;
+  fillDnnModal(_dnnItems[idx], idx);
+  document.getElementById('dnn-modal').classList.add('open');
+  // Init modal swipe
+  dnnInitModalSwipe();
+}
+
+function fillDnnModal(item, idx) {
+  if (!item) return;
+  var d = item.news_date ? new Date(item.news_date + 'T00:00:00') : null;
+  var dateStr = d ? ('0'+d.getDate()).slice(-2)+'/'+('0'+(d.getMonth()+1)).slice(-2)+'/'+d.getFullYear() : '';
+  var imgEl = document.getElementById('dnn-modal-img');
+  if (imgEl) { imgEl.src = ''; imgEl.src = item.image_url || ''; }
+  var dateEl = document.getElementById('dnn-modal-date');
+  if (dateEl) dateEl.textContent = dateStr;
+  var counterEl = document.getElementById('dnn-modal-counter');
+  if (counterEl) counterEl.textContent = (idx + 1) + ' / ' + _dnnItems.length;
+  var ttlEl = document.getElementById('dnn-modal-ttl');
+  if (ttlEl) ttlEl.textContent = item.title || '';
+  var descEl = document.getElementById('dnn-modal-desc');
+  if (descEl) descEl.textContent = item.description || '';
+  var linkEl = document.getElementById('dnn-modal-link');
+  if (linkEl) {
+    linkEl.href = item.source_url || '#';
+    linkEl.style.display = item.source_url ? 'inline-flex' : 'none';
+  }
+  // Nav arrow visibility
+  var prevBtn = document.getElementById('dnn-modal-prev');
+  var nextBtn = document.getElementById('dnn-modal-next');
+  if (prevBtn) prevBtn.style.opacity = idx === 0 ? '0.2' : '1';
+  if (nextBtn) nextBtn.style.opacity = idx >= _dnnItems.length - 1 ? '0.2' : '1';
+  if (prevBtn) prevBtn.disabled = idx === 0;
+  if (nextBtn) nextBtn.disabled = idx >= _dnnItems.length - 1;
+  // Scroll modal to top
+  var box = document.getElementById('dnn-modal-box');
+  if (box) box.scrollTop = 0;
+}
+
+// ── Modal prev/next ───────────────────────────────────────
+function dnnModalNav(dir) {
+  var newIdx = _dnnModalIdx + dir;
+  if (newIdx < 0 || newIdx >= _dnnItems.length) return;
+  _dnnModalIdx = newIdx;
+  dnnSetIdx(newIdx); // sync strip position too
+  fillDnnModal(_dnnItems[newIdx], newIdx);
+}
+
+// ── Modal swipe/drag ──────────────────────────────────────
+function dnnInitModalSwipe() {
+  var box = document.getElementById('dnn-modal-box');
+  if (!box || box._dnnModalSwipe) return;
+  box._dnnModalSwipe = true;
+  var startX = 0, dragging = false, moved = false;
+
+  // Touch swipe
+  box.addEventListener('touchstart', function(e) { startX = e.touches[0].clientX; }, { passive: true });
+  box.addEventListener('touchend', function(e) {
+    var dx = e.changedTouches[0].clientX - startX;
+    if (Math.abs(dx) > 50) dnnModalNav(dx < 0 ? 1 : -1);
+  });
+
+  // Mouse drag
+  box.addEventListener('mousedown', function(e) {
+    if (e.target.tagName === 'BUTTON' || e.target.tagName === 'A') return;
+    dragging = true; moved = false;
+    startX = e.clientX;
+    e.preventDefault();
+  });
+  document.addEventListener('mousemove', function(e) { if (dragging) moved = true; });
+  document.addEventListener('mouseup', function(e) {
+    if (!dragging) return;
+    dragging = false;
+    var dx = e.clientX - startX;
+    if (moved && Math.abs(dx) > 60) dnnModalNav(dx < 0 ? 1 : -1);
+    moved = false;
+  });
+}
+
+function closeDnnModal() {
+  document.getElementById('dnn-modal').classList.remove('open');
+}
 
 // Scroll to about section and highlight the target column
 function scrollToAboutCol(colId) {
@@ -1539,592 +1796,253 @@ async function postNewsComment() {
   if (!_currentNewsId || !window._supabase) return;
   // Members-only — RLS will reject anonymous inserts, but guard the UI too
   const { data: { session } } = await window._supabase.auth.getSession();
-  if (!session?.user) {
-    alert('Vui lòng đăng nhập để bình luận.');
-    syncCommentFormGate();
-    return;
-  }
-  btn.disabled = true;
-  btn.textContent = 'Đang gửi...';
-  try {
-    const { error } = await _supabase.from('comments').insert({
-      article_type: 'news',
-      article_id: _currentNewsId,
-      author_name: name,
-      content: text
-    });
-    if (error) throw error;
-    textEl.value = '';
-    alert('✓ Bình luận đã được gửi và đang chờ duyệt.');
-    await loadNewsComments(_currentNewsId);
-  } catch(e) {
-    alert('Gửi bình luận thất bại, vui lòng thử lại.');
-  } finally {
-    btn.disabled = false;
-    btn.textContent = 'Gửi Bình Luận';
-  }
+  if (!session?
+
+// ════════════════════════════════════════════════════════════
+//  KIẾN THỨC CRYPTO — member knowledge hub
+// ════════════════════════════════════════════════════════════
+let _ktAllPosts = [];
+let _ktActiveCat = 'all';
+
+const KT_CAT_LABELS = {
+  futures: '📈 Futures', onchain: '⛓️ Onchain', p2p: '💱 P2P',
+  basics: '📚 Cơ Bản', tools: '🔧 Tools'
+};
+const KT_CAT_EMOJI = {
+  futures: '📈', onchain: '⛓️', p2p: '💱', basics: '📚', tools: '🔧'
+};
+
+async function initKnowledgeSection() {
+  const content = document.getElementById('kt-content');
+  const lock    = document.getElementById('kt-lock');
+  if (content) content.style.display = 'block';
+  if (lock)    lock.style.display    = 'none';
+  // Reset to "Tất Cả" tab on each login
+  _ktActiveCat = 'all';
+  document.querySelectorAll('.kt-cat-btn').forEach(b => b.classList.toggle('active', b.dataset.cat === 'all'));
+  await loadKtPosts();
 }
 
-
-document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') closeNewsDetail();
-});
-
-// ═══════════════════════════════════════════════════════════════
-// DYNAMIC NEWS & EVENTS — Load from Supabase when published
-// ═══════════════════════════════════════════════════════════════
-
-async function loadDynamicContent() {
-  if (!window.supabase || !_supabase) return;
-
-  const TAG_COLORS = {
-    'Phân Tích':  { bg:'rgba(139,92,246,0.12)', color:'#a78bfa', border:'rgba(139,92,246,0.3)' },
-    'Thị Trường': { bg:'rgba(96,165,250,0.12)',  color:'#60a5fa', border:'rgba(96,165,250,0.3)' },
-    'Tin Tức':    { bg:'rgba(52,211,153,0.12)',  color:'#34d399', border:'rgba(52,211,153,0.3)' },
-    'Kiến Thức':  { bg:'rgba(245,158,11,0.12)',  color:'#f59e0b', border:'rgba(245,158,11,0.3)' },
-    'Cộng Đồng':  { bg:'rgba(248,113,113,0.12)', color:'#f87171', border:'rgba(248,113,113,0.3)' },
-  };
-
-  const EVENT_TYPE_LABELS  = { live:'Live Trading', workshop:'Workshop', ama:'AMA', exchange:'Sự Kiện Sàn', tribe:'Sự Kiện Bộ Tộc', other:'Khác' };
-  const EVENT_TYPE_CLASSES = { live:'event-type-live', workshop:'event-type-workshop', ama:'event-type-ama', exchange:'event-type-exchange', tribe:'event-type-tribe', other:'event-type-other' };
-
-  // ── Load Published News ──────────────────────────────────────
-  try {
-    const { data: newsItems } = await _supabase
-      .from('news')
-      .select('*')
-      .eq('status', 'published')
-      .order('published_date', { ascending: false })
-      .limit(6);
-
-    if (newsItems && newsItems.length > 0) {
-      const newsGrid = document.querySelector('#news .news-grid');
-      if (newsGrid) {
-        // Determine current language
-        const isEn = document.documentElement.lang === 'en' ||
-                     (document.querySelector('[data-vi]') && !document.querySelector('[data-vi]').textContent.match(/[\u00C0-\u024F\u1E00-\u1EFF]/));
-        // Cache all items for modal lookup
-        newsItems.forEach(item => { _newsCache[item.id] = item; });
-
-        newsGrid.innerHTML = newsItems.map(item => {
-          const tc = TAG_COLORS[item.tag] || TAG_COLORS['Phân Tích'];
-          const title   = isEn && item.title_en   ? item.title_en   : item.title_vi;
-          const excerpt = isEn && item.excerpt_en  ? item.excerpt_en : item.excerpt_vi || '';
-          const imgStyle = item.cover_image
-            ? `background:url('${item.cover_image}') center/cover no-repeat;`
-            : 'background:linear-gradient(135deg,#0d0720,#2d1052);';
-          const dateStr = item.published_date
-            ? new Date(item.published_date).toLocaleDateString('vi-VN', { day:'2-digit', month:'2-digit', year:'numeric' })
-            : '';
-          return `
-            <div class="news-card" style="opacity:1;transform:none">
-              <div class="news-img" style="${imgStyle}min-height:185px;"></div>
-              <div class="news-body">
-                <div style="display:flex;align-items:center;justify-content:space-between;">
-                  <span class="news-tag" style="background:${tc.bg};color:${tc.color};border-color:${tc.border}">${item.tag || ''}</span>
-                  <span class="news-date">${dateStr}</span>
-                </div>
-                <h3 class="news-title">${escHtml(title || '')}</h3>
-                <p class="news-excerpt">${escHtml(excerpt)}</p>
-                <div class="news-footer">
-                  <a href="#" class="news-read" onclick="openNewsDetail('${item.id}');return false;">Đọc Thêm <span>→</span></a>
-                </div>
-              </div>
-            </div>`;
-        }).join('');
-      }
-    }
-  } catch(e) { /* table may not exist yet — silently skip */ }
-
-  // ── Load Published Events ────────────────────────────────────
-  try {
-    const { data: eventItems } = await _supabase
-      .from('events')
-      .select('*')
-      .eq('status', 'published')
-      .order('event_date', { ascending: true })
-      .limit(6);
-
-    if (eventItems && eventItems.length > 0) {
-      const evGrid = document.querySelector('#events .events-grid');
-      if (evGrid) {
-        evGrid.innerHTML = eventItems.map(item => {
-          const dt = item.event_date ? new Date(item.event_date) : null;
-          const day = dt ? String(dt.getDate()).padStart(2,'0') : '—';
-          const mon = dt ? 'T' + (dt.getMonth()+1) : '—';
-          const typeLabel = EVENT_TYPE_LABELS[item.event_type] || item.event_type || 'Event';
-          const typeCls   = EVENT_TYPE_CLASSES[item.event_type] || 'event-type-live';
-          return `
-            <div class="event-card-v2" style="opacity:1;transform:none">
-              <div class="event-card-v2-header">
-                <div class="event-date-block">
-                  <span class="eday">${day}</span>
-                  <span class="emon">${mon}</span>
-                </div>
-                <div><span class="event-type-tag ${typeCls}">${typeLabel}</span></div>
-              </div>
-              <div class="event-card-v2-body">
-                <h3 class="event-card-v2-title">${escHtml(item.title || '')}</h3>
-                <p class="event-card-v2-desc">${escHtml(item.description || '')}</p>
-                <div class="event-card-v2-meta">
-                  ${item.event_time ? `<span>🕘 ${escHtml(item.event_time)}</span>` : ''}
-                  ${item.location   ? `<span>📍 ${escHtml(item.location)}</span>`   : ''}
-                </div>
-              </div>
-              <div class="event-card-v2-footer">
-                <a href="${item.register_link || '#'}" class="event-register-btn" ${item.register_link ? 'target="_blank" rel="noopener"' : ''}>Đăng Ký Tham Dự <span>→</span></a>
-              </div>
-            </div>`;
-        }).join('');
-      }
-    }
-  } catch(e) { /* table may not exist yet — silently skip */ }
-
+function hideKnowledgeSection() {
+  const content = document.getElementById('kt-content');
+  const lock    = document.getElementById('kt-lock');
+  if (content) content.style.display = 'none';
+  if (lock)    lock.style.display    = 'block';
+  _ktAllPosts = [];
+  const grid = document.getElementById('kt-grid');
+  if (grid) grid.innerHTML = '';
 }
 
-// Call after DOM is ready
-document.addEventListener('DOMContentLoaded', () => loadDynamicContent());
-
-// ═══════════════════════════════════════════════════════════════
-// REVIEWS — Load published image-only reviews from Supabase
-// ═══════════════════════════════════════════════════════════════
-async function loadReviewsFromDB() {
-  if (!window._supabase) return;
-  const grid = document.getElementById('reviews-grid');
-  const empty = document.getElementById('reviews-empty');
-  if (!grid) return;
+async function loadKtPosts() {
+  const grid  = document.getElementById('kt-grid');
+  const empty = document.getElementById('kt-empty');
+  if (!grid || !window._supabase) return;
+  grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:rgba(196,181,253,.4);padding:2.5rem;font-size:.88rem">Đang tải...</div>';
+  if (empty) empty.style.display = 'none';
   try {
-    const { data, error } = await _supabase
-      .from('reviews')
-      .select('id, image_url')
+    const { data, error } = await window._supabase
+      .from('knowledge_posts')
+      .select('*')
       .eq('status', 'published')
-      .order('display_order', { ascending: false })
+      .order('pinned',     { ascending: false })
       .order('created_at', { ascending: false });
     if (error) throw error;
-    if (!data || data.length === 0) {
-      grid.innerHTML = '';
-      if (empty) empty.style.display = 'block';
-      return;
-    }
-    if (empty) empty.style.display = 'none';
-    grid.innerHTML = data.map(r => `
-      <div class="review-card" onclick="openReviewLightbox('${escHtml(r.image_url)}')">
-        <img src="${escHtml(r.image_url)}" alt="Review" loading="lazy">
-      </div>`).join('');
-  } catch (e) {
-    // Table may not exist yet — silently keep empty state
-    if (empty) empty.style.display = 'block';
-  }
-}
-
-function openReviewLightbox(url) {
-  let lb = document.getElementById('review-lightbox');
-  if (!lb) {
-    lb = document.createElement('div');
-    lb.id = 'review-lightbox';
-    lb.className = 'review-lightbox';
-    lb.innerHTML = `
-      <button class="review-lightbox-close" onclick="closeReviewLightbox(event)" aria-label="Close">✕</button>
-      <img id="review-lightbox-img" src="" alt="Review">`;
-    lb.addEventListener('click', e => { if (e.target === lb) closeReviewLightbox(); });
-    document.body.appendChild(lb);
-  }
-  document.getElementById('review-lightbox-img').src = url;
-  lb.classList.add('open');
-  document.body.style.overflow = 'hidden';
-  if (window.gaEvent) gaEvent('view_review_image');
-}
-
-function closeReviewLightbox(e) {
-  if (e) e.stopPropagation();
-  const lb = document.getElementById('review-lightbox');
-  if (lb) lb.classList.remove('open');
-  document.body.style.overflow = '';
-}
-
-document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') closeReviewLightbox();
-});
-
-document.addEventListener('DOMContentLoaded', () => loadReviewsFromDB());
-
-function escHtml(s) {
-  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-
-// ===== PROMO POPUP =====
-function openPromoPopup() {
-  const popup = document.getElementById('promo-popup');
-  if (!popup) return;
-  popup.classList.add('open');
-  document.body.style.overflow = 'hidden';
-  if (window.gaEvent) gaEvent('open_promo_popup');
-}
-
-function closePromoPopup() {
-  const popup = document.getElementById('promo-popup');
-  if (!popup) return;
-  popup.classList.remove('open');
-  document.body.style.overflow = '';
-}
-
-(function initPromoPopup() {
-  document.addEventListener('DOMContentLoaded', async function() {
-    // Skip popup if a member/admin is already logged in
-    try {
-      if (window._supabase) {
-        const { data: { session } } = await _supabase.auth.getSession();
-        if (session) return; // logged-in user → no popup
-      }
-    } catch(e) {}
-    // Attach backdrop click to close
-    const popup = document.getElementById('promo-popup');
-    if (popup) {
-      popup.addEventListener('click', function(e) {
-        if (e.target === popup) closePromoPopup();
-      });
-    }
-    // Show after 1 minute on every visit
-    setTimeout(openPromoPopup, 60000);
-  });
-})();
-
-
-// ===== MACRO ECONOMIC CALENDAR — grouped by ISO week =====
-// ISO week: Monday-Sunday, week 1 = week containing Jan 4
-
-function _isoWeekKey(date) {
-  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
-  const dayNum = d.getUTCDay() || 7;            // Mon=1...Sun=7
-  d.setUTCDate(d.getUTCDate() + 4 - dayNum);    // Move to Thursday of same ISO week
-  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-  const weekNum = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
-  return `${d.getUTCFullYear()}-W${String(weekNum).padStart(2, '0')}`;
-}
-
-function _weekRange(weekKey) {
-  // weekKey = "YYYY-Www" → returns {monday, sunday} in local time
-  const [yearStr, wStr] = weekKey.split('-W');
-  const year = parseInt(yearStr, 10);
-  const week = parseInt(wStr, 10);
-  const jan4 = new Date(year, 0, 4);
-  const jan4Day = jan4.getDay() || 7;
-  const week1Monday = new Date(jan4);
-  week1Monday.setDate(jan4.getDate() - jan4Day + 1);
-  const monday = new Date(week1Monday);
-  monday.setDate(week1Monday.getDate() + (week - 1) * 7);
-  const sunday = new Date(monday);
-  sunday.setDate(monday.getDate() + 6);
-  return { monday, sunday };
-}
-
-(function initMacroCalendar() {
-  document.addEventListener('DOMContentLoaded', async function() {
-    if (!window._supabase) return;
-    const wrap = document.getElementById('macro-events-wrap');
-    const tabsEl = document.getElementById('macro-month-tabs');
-    if (!wrap || !tabsEl) return;
-
-    const { data, error } = await _supabase
-      .from('macro_events')
-      .select('*')
-      .order('event_date', { ascending: true });
-
-    if (error || !data || data.length === 0) {
-      wrap.innerHTML = '<div class="macro-empty">Chưa có dữ liệu sự kiện.</div>';
-      return;
-    }
-
-    // Group by ISO week (computed on the fly — no DB schema change)
-    const groups = {};
-    data.forEach(e => {
-      const key = _isoWeekKey(new Date(e.event_date));
-      if (!groups[key]) groups[key] = [];
-      groups[key].push(e);
-    });
-
-    const now = new Date();
-    const currentKey = _isoWeekKey(now);
-
-    // Window: 4 weeks before + current + 3 weeks after = 8 tabs total
-    const windowKeys = [];
-    for (let offset = -4; offset <= 3; offset++) {
-      const target = new Date(now);
-      target.setDate(target.getDate() + offset * 7);
-      windowKeys.push(_isoWeekKey(target));
-    }
-
-    // Default: first week from current onwards that has upcoming events
-    let defaultKey = currentKey;
-    for (let i = windowKeys.indexOf(currentKey); i < windowKeys.length; i++) {
-      const k = windowKeys[i];
-      if (groups[k] && groups[k].some(e => new Date(e.event_date) >= now)) {
-        defaultKey = k;
-        break;
-      }
-    }
-
-    // Build week tabs — format "Tuần 18 (28/04 – 04/05)"
-    const fmt = d => String(d.getDate()).padStart(2,'0') + '/' + String(d.getMonth()+1).padStart(2,'0');
-    tabsEl.innerHTML = windowKeys.map(k => {
-      const { monday, sunday } = _weekRange(k);
-      const w = parseInt(k.split('-W')[1], 10);
-      const isThisWeek = k === currentKey;
-      const label = `Tuần ${w} (${fmt(monday)} – ${fmt(sunday)})${isThisWeek ? ' • Tuần này' : ''}`;
-      return `<button class="macro-month-btn${k === defaultKey ? ' active' : ''}" onclick="switchMacroWeek('${k}',this)">${label}</button>`;
-    }).join('');
-
-    window._macroGroups = groups;
-    renderMacroWeek(defaultKey);
-  });
-})();
-
-function switchMacroWeek(weekKey, btn) {
-  document.querySelectorAll('.macro-month-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  renderMacroWeek(weekKey);
-}
-
-function renderMacroWeek(weekKey) {
-  const wrap = document.getElementById('macro-events-wrap');
-  const events = ((window._macroGroups || {})[weekKey] || []).slice();
-  const now = new Date();
-
-  if (events.length === 0) {
-    wrap.innerHTML = '<div class="macro-empty">Không có sự kiện trong tuần này.</div>';
-    return;
-  }
-
-  events.sort((a, b) => new Date(a.event_date) - new Date(b.event_date));
-
-  const impactLabel = { High: 'Cao', Medium: 'Trung bình', Low: 'Thấp' };
-  wrap.innerHTML = events.map(e => {
-    const d = new Date(e.event_date);
-    const isPast = d < now;
-    const dateStr = d.toLocaleDateString('vi-VN', { weekday:'short', day:'2-digit', month:'2-digit' });
-    const timeStr = d.toLocaleTimeString('vi-VN', { hour:'2-digit', minute:'2-digit' });
-    const hasForecast = e.forecast && e.forecast !== 'null';
-    const hasActual   = e.actual   && e.actual   !== 'null';
-    const hasPrev     = e.previous && e.previous !== 'null';
-
-    return `<div class="macro-event-row${isPast ? ' past' : ' upcoming'}">
-      <div class="macro-event-date">
-        <div>${dateStr}</div>
-        <div class="mtime">${timeStr}</div>
-      </div>
-      <div class="macro-event-impact ${e.impact}" title="${impactLabel[e.impact]||e.impact}"></div>
-      <div class="macro-event-info">
-        <div class="macro-event-name">${escHtml(e.event_name)}</div>
-        <div class="macro-event-vals">
-          ${hasForecast ? `<span>Dự báo: <b>${escHtml(e.forecast)}</b></span>` : ''}
-          ${hasActual   ? `<span>Thực tế: <b>${escHtml(e.actual)}</b></span>`  : ''}
-          ${hasPrev     ? `<span>Kỳ trước: <b>${escHtml(e.previous)}</b></span>` : ''}
-        </div>
-      </div>
-      ${!isPast ? '<span class="macro-upcoming-badge">Sắp diễn ra</span>' : ''}
-      ${(e.article_url && e.article_url !== 'null' && e.article_url.trim()) ? `<a href="${escHtml(e.article_url.trim())}" target="_blank" rel="noopener" class="macro-event-link">Đọc thêm →</a>` : ''}
-    </div>`;
-  }).join('');
-}
-
-
-// ══════════════════════════════════════════════════════════
-//  TIN TỨC HẰNG NGÀY  —  full-width carousel
-// ══════════════════════════════════════════════════════════
-var _dnnItems = [];
-var _dnnIdx = 0;
-var _dnnModalIdx = 0;
-
-async function loadDailyNews() {
-  var track = document.getElementById('dnn-track');
-  if (!track) return;
-  if (!window._supabase) {
-    track.innerHTML = '<div class="dnn-empty">Chưa kết nối dữ liệu.</div>';
-    return;
-  }
-  try {
-    var res = await window._supabase
-      .from('daily_news')
-      .select('*')
-      .eq('status', 'published')
-      .order('news_date', { ascending: false })
-      .limit(30);
-    if (res.error) throw res.error;
-    _dnnItems = res.data || [];
-    renderDailyNews(_dnnItems);
+    _ktAllPosts = data || [];
+    renderKtPosts(_ktActiveCat);
   } catch(e) {
-    track.innerHTML = '<div class="dnn-empty">Không tải được tin tức.</div>';
+    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:rgba(248,113,113,.6);padding:2.5rem;font-size:.88rem">Không thể tải bài viết.</div>';
   }
 }
 
-function renderDailyNews(items) {
-  var track = document.getElementById('dnn-track');
-  var dotsEl = document.getElementById('dnn-dots');
-  if (!track) return;
-  _dnnIdx = 0;
-  if (!items || items.length === 0) {
-    track.innerHTML = '<div class="dnn-empty">Chưa có tin tức hằng ngày.</div>';
-    if (dotsEl) dotsEl.innerHTML = '';
+function renderKtPosts(cat) {
+  _ktActiveCat = cat;
+  const grid  = document.getElementById('kt-grid');
+  const empty = document.getElementById('kt-empty');
+  if (!grid) return;
+  const posts = cat === 'all' ? _ktAllPosts : _ktAllPosts.filter(p => p.category === cat);
+  if (posts.length === 0) {
+    grid.innerHTML = '';
+    if (empty) empty.style.display = 'block';
     return;
   }
-  track.innerHTML = items.map(function(item, idx) {
-    var d = item.news_date ? new Date(item.news_date + 'T00:00:00') : null;
-    var dateStr = d ? ('0'+d.getDate()).slice(-2)+'/'+('0'+(d.getMonth()+1)).slice(-2)+'/'+d.getFullYear() : '';
-    return '<div class="dnn-card" onclick="openDnnModal('+idx+')" role="button" tabindex="0" draggable="false">'
-      + '<img src="'+escHtml(item.image_url || '')+'" alt="" loading="lazy" draggable="false">'
-      + '<div class="dnn-card-foot">'
-      + '<div class="dnn-card-date">'+dateStr+'</div>'
-      + '<div class="dnn-card-ttl">'+escHtml(item.title || '')+'</div>'
-      + '</div></div>';
+  if (empty) empty.style.display = 'none';
+  grid.innerHTML = posts.map(p => {
+    const coverHtml = p.cover_image
+      ? `<div class="kt-card-cover"><img src="${escHtml(p.cover_image)}" alt="" loading="lazy" onerror="this.parentElement.innerHTML='${KT_CAT_EMOJI[p.category]||'📝'}'"></div>`
+      : `<div class="kt-card-cover">${KT_CAT_EMOJI[p.category] || '📝'}</div>`;
+    const pinBadge = p.pinned ? '<span class="kt-pin-badge">📌</span>' : '';
+    const date = p.created_at ? new Date(p.created_at).toLocaleDateString('vi-VN') : '';
+    const catLabel = escHtml(KT_CAT_LABELS[p.category] || p.category);
+    return `
+      <div class="kt-card" onclick="openKtDetail('${escHtml(p.id)}')">
+        ${coverHtml}
+        <div class="kt-card-body">
+          <div><span class="kt-tag">${catLabel}</span>${pinBadge}</div>
+          <p class="kt-card-title">${escHtml(p.title)}</p>
+          <p class="kt-card-excerpt">${escHtml((p.excerpt || '').substring(0, 120))}${(p.excerpt||'').length > 120 ? '…' : ''}</p>
+          <div class="kt-card-meta">
+            <span>👤 ${escHtml(p.author_name || 'Member')}</span>
+            <span>${date}</span>
+          </div>
+        </div>
+      </div>`;
   }).join('');
-  if (dotsEl) {
-    dotsEl.innerHTML = items.map(function(_, i) {
-      return '<button class="dnn-dot'+(i===0?' active':'')+'" onclick="dnnSetIdx('+i+')" aria-label="'+(i+1)+'"></button>';
-    }).join('');
+}
+
+function filterKt(btn) {
+  document.querySelectorAll('.kt-cat-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderKtPosts(btn.dataset.cat);
+}
+
+function openKtDetail(id) {
+  const post = _ktAllPosts.find(p => p.id === id);
+  if (!post) return;
+  const inner = document.getElementById('kt-detail-inner');
+  if (!inner) return;
+
+  let mediaHtml = '';
+  if (post.youtube_url) {
+    const ytId = _ktExtractYtId(post.youtube_url);
+    if (ytId) {
+      mediaHtml = `<div style="position:relative;padding-bottom:56.25%;height:0;margin-bottom:1.5rem;border-radius:12px;overflow:hidden">
+        <iframe src="https://www.youtube.com/embed/${ytId}" style="position:absolute;inset:0;width:100%;height:100%;border:none" allowfullscreen loading="lazy"></iframe>
+      </div>`;
+    }
+  } else if (post.cover_image) {
+    mediaHtml = `<img src="${escHtml(post.cover_image)}" alt="" style="width:100%;max-height:320px;object-fit:cover;border-radius:12px;margin-bottom:1.5rem" onerror="this.style.display='none'" loading="lazy">`;
   }
-  dnnUpdateArrows();
-  dnnInitDrag();
+
+  const date = post.created_at
+    ? new Date(post.created_at).toLocaleDateString('vi-VN', { year:'numeric', month:'long', day:'numeric' })
+    : '';
+  const catLabel = escHtml(KT_CAT_LABELS[post.category] || post.category);
+  const pinBadge = post.pinned ? '<span class="kt-pin-badge" style="margin-left:.5rem">📌 Ghim</span>' : '';
+
+  inner.innerHTML = `
+    ${mediaHtml}
+    <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:1rem;flex-wrap:wrap">
+      <span class="kt-tag">${catLabel}</span>${pinBadge}
+    </div>
+    <h2 style="color:#e9d5ff;font-size:clamp(1.1rem,3vw,1.5rem);font-weight:800;margin:0 0 .75rem;line-height:1.3">${escHtml(post.title)}</h2>
+    <div style="display:flex;gap:1rem;color:rgba(196,181,253,.45);font-size:.78rem;margin-bottom:1.5rem;flex-wrap:wrap">
+      <span>👤 ${escHtml(post.author_name || 'Member')}</span>
+      <span>📅 ${date}</span>
+    </div>
+    ${post.excerpt ? `<p style="color:rgba(196,181,253,.72);font-size:.9rem;line-height:1.6;margin:0 0 1.5rem;padding:.9rem 1rem;background:rgba(139,92,246,.08);border-left:3px solid rgba(139,92,246,.5);border-radius:0 8px 8px 0">${escHtml(post.excerpt)}</p>` : ''}
+    <div style="color:rgba(196,181,253,.82);font-size:.9rem;line-height:1.9;white-space:pre-wrap">${escHtml(post.content || '')}</div>`;
+
+  const overlay = document.getElementById('kt-detail-overlay');
+  if (overlay) { overlay.style.display = 'block'; document.body.style.overflow = 'hidden'; }
 }
 
-function dnnSetIdx(idx) {
-  var track = document.getElementById('dnn-track');
-  if (!track) return;
-  idx = Math.max(0, Math.min(_dnnItems.length - 1, idx));
-  _dnnIdx = idx;
-  track.style.transform = 'translateX(-' + (idx * 100) + '%)';
-  document.querySelectorAll('#dnn-dots .dnn-dot').forEach(function(d, i) {
-    d.classList.toggle('active', i === idx);
+function closeKtDetail() {
+  const overlay = document.getElementById('kt-detail-overlay');
+  if (overlay) overlay.style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+function _ktExtractYtId(url) {
+  const m = (url || '').match(/(?:v=|youtu\.be\/|embed\/)([A-Za-z0-9_-]{11})/);
+  return m ? m[1] : null;
+}
+
+function openKtWrite() {
+  ['kt-w-title','kt-w-excerpt','kt-w-content','kt-w-cover','kt-w-yt'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = '';
   });
-  dnnUpdateArrows();
+  const cat = document.getElementById('kt-w-cat'); if (cat) cat.value = '';
+  const err = document.getElementById('kt-w-error'); if (err) err.style.display = 'none';
+  const btn = document.getElementById('kt-w-submit');
+  if (btn) { btn.disabled = false; btn.textContent = 'Gửi Bài'; }
+  const overlay = document.getElementById('kt-write-overlay');
+  if (overlay) { overlay.style.display = 'block'; document.body.style.overflow = 'hidden'; }
 }
 
-function dnnNav(dir) { dnnSetIdx(_dnnIdx + dir); }
-
-function dnnUpdateArrows() {
-  var prev = document.getElementById('dnn-arr-prev');
-  var next = document.getElementById('dnn-arr-next');
-  if (prev) prev.disabled = _dnnIdx === 0;
-  if (next) next.disabled = _dnnIdx >= _dnnItems.length - 1;
+function closeKtWrite() {
+  const overlay = document.getElementById('kt-write-overlay');
+  if (overlay) overlay.style.display = 'none';
+  document.body.style.overflow = '';
 }
 
-function dnnInitDrag() {
-  var track = document.getElementById('dnn-track');
-  if (!track || track._dnnDrag) return;
-  track._dnnDrag = true;
-  var startX = 0, dragging = false, moved = false;
-  function trackW() { return track.parentElement ? track.parentElement.offsetWidth : 320; }
-  function applyDrag(dx) {
-    track.style.transform = 'translateX(calc(-' + (_dnnIdx * 100) + '% + ' + dx + 'px))';
+async function submitKtPost() {
+  const title   = (document.getElementById('kt-w-title')?.value   || '').trim();
+  const cat     =  document.getElementById('kt-w-cat')?.value     || '';
+  const excerpt = (document.getElementById('kt-w-excerpt')?.value || '').trim();
+  const content = (document.getElementById('kt-w-content')?.value || '').trim();
+  const cover   = (document.getElementById('kt-w-cover')?.value   || '').trim();
+  const yt      = (document.getElementById('kt-w-yt')?.value      || '').trim();
+  const errEl   =  document.getElementById('kt-w-error');
+  const btn     =  document.getElementById('kt-w-submit');
+
+  const showErr = msg => { if (errEl) { errEl.textContent = msg; errEl.style.display = 'block'; } };
+  if (errEl) errEl.style.display = 'none';
+
+  if (!title)   return showErr('Vui lòng nhập tiêu đề.');
+  if (!cat)     return showErr('Vui lòng chọn danh mục.');
+  if (!excerpt) return showErr('Vui lòng nhập tóm tắt ngắn.');
+  if (!content) return showErr('Vui lòng nhập nội dung bài viết.');
+  if (!window._supabase) return showErr('Lỗi kết nối. Vui lòng thử lại.');
+
+  const { data: { session } } = await window._supabase.auth.getSession();
+  if (!session?.user) return showErr('Phiên đăng nhập đã hết. Vui lòng đăng nhập lại.');
+
+  const user = session.user;
+  const authorName = user.user_metadata?.full_name
+    || user.user_metadata?.name
+    || user.email?.split('@')[0]
+    || 'Member';
+
+  if (btn) { btn.disabled = true; btn.textContent = 'Đang gửi...'; }
+
+  try {
+    const { error } = await window._supabase.from('knowledge_posts').insert([{
+      title,
+      category:    cat,
+      excerpt,
+      content,
+      cover_image: cover || null,
+      youtube_url: yt    || null,
+      author_id:   user.id,
+      author_name: authorName,
+      status:      'pending',
+      pinned:      false
+    }]);
+    if (error) throw error;
+
+    closeKtWrite();
+    // Toast notification
+    const toast = document.createElement('div');
+    toast.textContent = '✅ Bài viết đã gửi — chờ admin duyệt!';
+    toast.style.cssText = 'position:fixed;bottom:1.8rem;left:50%;transform:translateX(-50%);background:#1e1b4b;border:1px solid rgba(139,92,246,.5);color:#e9d5ff;padding:.7rem 1.6rem;border-radius:50px;font-size:.85rem;z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,.5);white-space:nowrap';
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 4000);
+  } catch(e) {
+    showErr('Gửi bài thất bại: ' + (e.message || 'Lỗi không xác định'));
+    if (btn) { btn.disabled = false; btn.textContent = 'Gửi Bài'; }
   }
-  track.addEventListener('touchstart', function(e) {
-    startX = e.touches[0].clientX;
-    track.classList.add('no-anim');
-  }, { passive: true });
-  track.addEventListener('touchmove', function(e) {
-    applyDrag(e.touches[0].clientX - startX);
-  }, { passive: true });
-  track.addEventListener('touchend', function(e) {
-    track.classList.remove('no-anim');
-    var dx = e.changedTouches[0].clientX - startX;
-    if (Math.abs(dx) > 50) dnnNav(dx < 0 ? 1 : -1);
-    else dnnSetIdx(_dnnIdx);
-  });
-  track.addEventListener('mousedown', function(e) {
-    if (e.target.tagName === 'BUTTON' || e.target.tagName === 'A') return;
-    dragging = true; moved = false;
-    startX = e.clientX;
-    track.classList.add('no-anim');
-    e.preventDefault();
-  });
-  document.addEventListener('mousemove', function(e) {
-    if (!dragging) return;
-    moved = true;
-    applyDrag(e.clientX - startX);
-  });
-  document.addEventListener('mouseup', function(e) {
-    if (!dragging) return;
-    dragging = false;
-    track.classList.remove('no-anim');
-    var dx = e.clientX - startX;
-    if (moved && Math.abs(dx) > 50) dnnNav(dx < 0 ? 1 : -1);
-    else dnnSetIdx(_dnnIdx);
-    moved = false;
-  });
 }
 
-function openDnnModal(idx) {
-  _dnnModalIdx = idx;
-  fillDnnModal(_dnnItems[idx], idx);
-  document.getElementById('dnn-modal').classList.add('open');
-  dnnInitModalSwipe();
+
+// ════════════════════════════════════════════════════════════
+//  LIGHT / DARK MODE TOGGLE
+// ════════════════════════════════════════════════════════════
+function toggleTheme() {
+  const isLight = document.body.classList.toggle('light-mode');
+  localStorage.setItem('botoc-theme', isLight ? 'light' : 'dark');
+  _syncThemeIcons(isLight);
 }
 
-function fillDnnModal(item, idx) {
-  if (!item) return;
-  var d = item.news_date ? new Date(item.news_date + 'T00:00:00') : null;
-  var dateStr = d ? ('0'+d.getDate()).slice(-2)+'/'+('0'+(d.getMonth()+1)).slice(-2)+'/'+d.getFullYear() : '';
-  var imgEl = document.getElementById('dnn-modal-img');
-  if (imgEl) { imgEl.src = ''; imgEl.src = item.image_url || ''; }
-  var dateEl = document.getElementById('dnn-modal-date');
-  if (dateEl) dateEl.textContent = dateStr;
-  var counterEl = document.getElementById('dnn-modal-counter');
-  if (counterEl) counterEl.textContent = (idx + 1) + ' / ' + _dnnItems.length;
-  var ttlEl = document.getElementById('dnn-modal-ttl');
-  if (ttlEl) ttlEl.textContent = item.title || '';
-  var descEl = document.getElementById('dnn-modal-desc');
-  if (descEl) descEl.textContent = item.description || '';
-  var linkEl = document.getElementById('dnn-modal-link');
-  if (linkEl) {
-    linkEl.href = item.source_url || '#';
-    linkEl.style.display = item.source_url ? 'inline-flex' : 'none';
-  }
-  var prevBtn = document.getElementById('dnn-modal-prev');
-  var nextBtn = document.getElementById('dnn-modal-next');
-  if (prevBtn) prevBtn.style.opacity = idx === 0 ? '0.2' : '1';
-  if (nextBtn) nextBtn.style.opacity = idx >= _dnnItems.length - 1 ? '0.2' : '1';
-  if (prevBtn) prevBtn.disabled = idx === 0;
-  if (nextBtn) nextBtn.disabled = idx >= _dnnItems.length - 1;
-  var box = document.getElementById('dnn-modal-box');
-  if (box) box.scrollTop = 0;
+function _syncThemeIcons(isLight) {
+  // ☀️ = currently dark (click to go light) | 🌙 = currently light (click to go dark)
+  const icon = isLight ? '🌙' : '☀️';
+  const btn1 = document.getElementById('theme-toggle-btn');
+  const btn2 = document.getElementById('theme-toggle-btn-mob');
+  if (btn1) btn1.textContent = icon;
+  if (btn2) btn2.textContent = icon;
 }
 
-function dnnModalNav(dir) {
-  var newIdx = _dnnModalIdx + dir;
-  if (newIdx < 0 || newIdx >= _dnnItems.length) return;
-  _dnnModalIdx = newIdx;
-  dnnSetIdx(newIdx);
-  fillDnnModal(_dnnItems[newIdx], newIdx);
-}
-
-function dnnInitModalSwipe() {
-  var box = document.getElementById('dnn-modal-box');
-  if (!box || box._dnnModalSwipe) return;
-  box._dnnModalSwipe = true;
-  var startX = 0, dragging = false, moved = false;
-  box.addEventListener('touchstart', function(e) { startX = e.touches[0].clientX; }, { passive: true });
-  box.addEventListener('touchend', function(e) {
-    var dx = e.changedTouches[0].clientX - startX;
-    if (Math.abs(dx) > 50) dnnModalNav(dx < 0 ? 1 : -1);
-  });
-  box.addEventListener('mousedown', function(e) {
-    if (e.target.tagName === 'BUTTON' || e.target.tagName === 'A') return;
-    dragging = true; moved = false; startX = e.clientX; e.preventDefault();
-  });
-  document.addEventListener('mousemove', function(e) { if (dragging) moved = true; });
-  document.addEventListener('mouseup', function(e) {
-    if (!dragging) return;
-    dragging = false;
-    var dx = e.clientX - startX;
-    if (moved && Math.abs(dx) > 50) dnnModalNav(dx < 0 ? 1 : -1);
-    moved = false;
-  });
-}
-
-function closeDnnModal() {
-  var m = document.getElementById('dnn-modal');
-  if (m) m.classList.remove('open');
-}
-
+// Sync icon on page load (body class already set by anti-FOUC script in <body>)
 document.addEventListener('DOMContentLoaded', function() {
-  loadDailyNews();
+  _syncThemeIcons(document.body.classList.contains('light-mode'));
 });

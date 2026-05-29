@@ -519,10 +519,10 @@ tr:hover td{background:rgba(139,92,246,0.04)}
       <nav class="sidebar-nav">
         <div class="nav-section">Tổng Quan</div>
         <div class="nav-item active" onclick="showPage('dashboard',this)">
-          <span class="nav-icon"><img src="icon_chart.svg" class="nav-svg-icon" alt=""></span> Dashboard
+          <span class="nav-icon"><img src="icon_chart_1.svg" class="nav-svg-icon" alt=""></span> Dashboard
         </div>
         <div class="nav-item" onclick="showPage('members',this)">
-          <span class="nav-icon">👥</span> Thành Viên
+          <span class="nav-icon"><img src="icon_comnunity_1.svg" class="nav-svg-icon" alt=""></span> Thành Viên
         </div>
         <div class="nav-section">Nội Dung</div>
         <div class="nav-item" onclick="showPage('events',this)">
@@ -538,8 +538,11 @@ tr:hover td{background:rgba(139,92,246,0.04)}
           <span class="nav-icon"><img src="icon_light.svg" class="nav-svg-icon" alt=""></span> Tin Hằng Ngày
         </div>
         <div class="nav-section">Cộng Đồng</div>
+        <div class="nav-item" onclick="showPage('knowledge',this)">
+          <span class="nav-icon">📖</span> Kiến Thức Crypto
+        </div>
         <div class="nav-item" onclick="showPage('comments',this)">
-          <span class="nav-icon">💬</span> Bình Luận
+          <span class="nav-icon"><img src="icon_comment.svg" class="nav-svg-icon" alt=""></span> Bình Luận
         </div>
         <div class="nav-item" onclick="showPage('macro',this)">
           <span class="nav-icon"><img src="icon_flash.svg" class="nav-svg-icon" alt=""></span> Lịch Vĩ Mô
@@ -549,7 +552,7 @@ tr:hover td{background:rgba(139,92,246,0.04)}
         </div>
         <div class="nav-section">Tài Khoản</div>
         <div class="nav-item" onclick="showPage('settings',this)">
-          <span class="nav-icon"><img src="icon_system.svg" class="nav-svg-icon" alt=""></span> Cài Đặt
+          <span class="nav-icon"><img src="icon_setting.svg" class="nav-svg-icon" alt=""></span> Cài Đặt
         </div>
       </nav>
       <div class="sidebar-bottom">
@@ -586,7 +589,7 @@ tr:hover td{background:rgba(139,92,246,0.04)}
           </div>
           <div class="kpi-grid" id="kpi-grid">
             <div class="kpi-card purple">
-              <div class="kpi-icon">👥</div>
+              <div class="kpi-icon"><img src="icon_comnunity_1.svg" class="kpi-svg-icon" alt=""></div>
               <div class="kpi-value" id="kpi-total">—</div>
               <div class="kpi-label">Tổng thành viên</div>
             </div>
@@ -601,7 +604,7 @@ tr:hover td{background:rgba(139,92,246,0.04)}
               <div class="kpi-label">Bài đã đăng</div>
             </div>
             <div class="kpi-card blue">
-              <div class="kpi-icon">📍</div>
+              <div class="kpi-icon"><img src="icon_location.svg" class="kpi-svg-icon" alt=""></div>
               <div class="kpi-value" id="kpi-provinces">—</div>
               <div class="kpi-label">Tỉnh / Thành Phố</div>
             </div>
@@ -610,7 +613,7 @@ tr:hover td{background:rgba(139,92,246,0.04)}
           <div class="charts-row">
             <!-- Province chart -->
             <div class="chart-card">
-              <div class="chart-title">📍 Phân bổ theo Tỉnh / Thành Phố</div>
+              <div class="chart-title"><img src="icon_location.svg" class="nav-svg-icon" alt=""> Phân bổ theo Tỉnh / Thành Phố</div>
               <div class="chart-wrap"><canvas id="chart-province"></canvas></div>
             </div>
             <!-- Capital chart -->
@@ -648,7 +651,7 @@ tr:hover td{background:rgba(139,92,246,0.04)}
         <!-- ── MEMBERS PAGE ── -->
         <div class="page" id="page-members">
           <div class="page-header">
-            <h2>👥 Danh Sách Thành Viên</h2>
+            <h2><img src="icon_comnunity_1.svg" class="nav-svg-icon" alt=""> Danh Sách Thành Viên</h2>
             <button class="btn-secondary" onclick="loadMembers()">🔄 Làm mới</button>
           </div>
 
@@ -831,11 +834,24 @@ tr:hover td{background:rgba(139,92,246,0.04)}
         </div>
 
         <!-- ── COMMENTS PAGE ── -->
+        <div class="page" id="page-knowledge">
+          <div class="page-header">
+            <button class="btn-secondary" onclick="loadKnowledgeAdmin()">🔄 Làm mới</button>
+            <button class="btn-primary" onclick="openKtAdminPost()">➕ Thêm bài</button>
+          </div>
+          <div style="display:flex;gap:.5rem;margin-bottom:1.5rem;flex-wrap:wrap">
+            <button id="kta-tab-pending"   class="btn-primary"   onclick="showKtaTab('pending')">⏳ Chờ Duyệt <span id="kta-pending-count"></span></button>
+            <button id="kta-tab-published" class="btn-secondary" onclick="showKtaTab('published')">✅ Đã Duyệt</button>
+            <button id="kta-tab-rejected"  class="btn-secondary" onclick="showKtaTab('rejected')">❌ Từ Chối</button>
+          </div>
+          <div id="kta-list"></div>
+        </div>
+
         <div class="page" id="page-comments">
           <div style="max-width:900px">
             <div class="chart-card">
               <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:.5rem">
-                <h3 style="margin:0;color:#e2d9f3;font-size:1rem">💬 Quản Lý Bình Luận</h3>
+                <h3 style="margin:0;color:#e2d9f3;font-size:1rem"><img src="icon_comment.svg" class="nav-svg-icon" alt=""> Quản Lý Bình Luận</h3>
                 <span id="comments-count" style="font-size:.8rem;color:#6b5e8a"></span>
               </div>
               <div id="admin-comments-list"><p style="color:#6b5e8a;font-size:.85rem">Đang tải...</p></div>
@@ -1038,7 +1054,7 @@ tr:hover td{background:rgba(139,92,246,0.04)}
 
             <!-- How to add more admins -->
             <div class="chart-card">
-              <div class="chart-title">👥 Thêm Tài Khoản Admin Mới</div>
+              <div class="chart-title"><img src="icon_personal.svg" class="nav-svg-icon" alt=""> Thêm Tài Khoản Admin Mới</div>
               <p style="font-size:.88rem;color:var(--text2);line-height:1.7;margin-bottom:1rem">
                 Tài khoản admin được quản lý qua <strong style="color:var(--text)">Supabase Authentication</strong>. Để thêm admin mới, làm theo các bước sau:
               </p>
@@ -1481,6 +1497,7 @@ const pageInfo = {
   reviews:     { title: 'Quản Lý Review',        sub: 'Upload ảnh đánh giá thành viên' },
   news:        { title: 'Quản Lý Tin Tức',       sub: 'Tạo và quản lý bài viết' },
   'daily-news':{ title: 'Tin Tức Hằng Ngày',    sub: 'Đăng tin và hình ảnh hằng ngày' },
+  'knowledge':  { title: 'Kiến Thức Crypto',     sub: 'Duyệt và quản lý bài viết từ cộng đồng' },
   comments:    { title: 'Bình Luận',             sub: 'Quản lý bình luận của cộng đồng' },
   macro:       { title: 'Lịch Kinh Tế Vĩ Mô',  sub: 'Quản lý sự kiện kinh tế vĩ mô thế giới' },
   performance: { title: 'Hiệu Suất',             sub: 'Import và quản lý dữ liệu hiệu suất giao dịch' },
@@ -1502,6 +1519,7 @@ function showPage(name, el) {
   if (name === 'news') loadNews();
   if (name === 'daily-news') loadDailyNewsAdmin();
   if (name === 'comments') loadCommentsPage();
+  if (name === 'knowledge') loadKnowledgeAdmin();
   if (name === 'macro') loadMacroPage();
   if (name === 'performance') loadPerformancePage();
   // Auto-close mobile sidebar after switching page
@@ -3212,48 +3230,177 @@ sb.auth.onAuthStateChange((event, session) => {
         document.getElementById('macro-preview-info').textContent =
           `✅ Tìm thấy ${_macroParsedRows.length} sự kiện hợp lệ${errors.length ? ` (bỏ qua ${errors.length} lỗi)` : ''}`;
 
-        const cols = ['Tên Sự Kiện','Ngày','Giờ','Mức Độ','Forecast','Previous'];
-        document.getElementById('macro-preview-head').innerHTML = cols.map(c =>
-          `<th style="padding:.35rem .6rem;color:#9d8ec7;font-size:.75rem;font-weight:600;white-space:nowrap">${c}</th>`
-        ).join('');
-        document.getElementById('macro-preview-body').innerHTML = _macroParsedRows.slice(0,8).map(r => `
-          <tr style="border-top:1px solid rgba(139,92,246,0.1)">
-            <td style="padding:.3rem .6rem;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(r.event_name)}</td>
-            <td style="padding:.3rem .6rem;white-space:nowrap">${esc(r._display_date)}</td>
-            <td style="padding:.3rem .6rem">${esc(r._display_time)}</td>
-            <td style="padding:.3rem .6rem"><span style="padding:.1rem .45rem;border-radius:99px;font-size:.7rem;font-weight:700;background:${r.impact==='High'?'rgba(248,113,113,0.15)':r.impact==='Medium'?'rgba(245,158,11,0.15)':'rgba(52,211,153,0.15)'};color:${r.impact==='High'?'#f87171':r.impact==='Medium'?'#f59e0b':'#34d399'}">${r.impact}</span></td>
-            <td style="padding:.3rem .6rem;color:#9d8ec7">${esc(r.forecast||'—')}</td>
-            <td style="padding:.3rem .6rem;color:#9d8ec7">${esc(r.previous||'—')}</td>
-          </tr>`).join('');
+        const cols = ['Tên Sự Kiện','Ngày','Giờ','Mức Độ'
+<script>
+// ════════════════════════════════════════════════════════════
+//  KIẾN THỨC CRYPTO — admin panel
+// ════════════════════════════════════════════════════════════
+let _ktaTab = 'pending';
 
-        document.getElementById('macro-preview').style.display = 'block';
-      } catch(err) {
-        showToast('Lỗi đọc file: ' + err.message, 'error');
-      }
-    };
-    reader.readAsArrayBuffer(fileInput.files[0]);
-  }
+async function loadKnowledgeAdmin() {
+  showKtaTab(_ktaTab);
+}
 
-  async function confirmMacroImport() {
-    if (!_macroParsedRows.length) return;
-    const btn = document.getElementById('macro-confirm-btn');
-    btn.disabled = true;
-    btn.textContent = 'Đang import...';
-    try {
-      const toInsert = _macroParsedRows.map(({ _display_date, _display_time, ...row }) => row);
-      const { error } = await sb.from('macro_events').insert(toInsert);
-      if (error) throw error;
-      showToast(`✅ Đã import ${toInsert.length} sự kiện`, 'success');
-      cancelMacroImport();
-      await loadAdminMacroEvents();
-    } catch(err) {
-      showToast('Lỗi import: ' + err.message, 'error');
-    } finally {
-      btn.disabled = false;
-      btn.textContent = '💾 Xác Nhận Import';
+async function showKtaTab(tab) {
+  _ktaTab = tab;
+  // Style tab buttons
+  ['pending','published','rejected'].forEach(t => {
+    const btn = document.getElementById('kta-tab-' + t);
+    if (btn) btn.className = t === tab ? 'btn-primary' : 'btn-secondary';
+  });
+
+  const list = document.getElementById('kta-list');
+  if (!list || !window._supabase) return;
+  list.innerHTML = '<p style="color:rgba(196,181,253,.5);font-size:.88rem;padding:.5rem 0">Đang tải...</p>';
+
+  try {
+    const { data, error } = await window._supabase
+      .from('knowledge_posts')
+      .select('*')
+      .eq('status', tab)
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+
+    // Update pending count badge
+    if (tab === 'pending') {
+      const countEl = document.getElementById('kta-pending-count');
+      if (countEl) countEl.textContent = data.length ? `(${data.length})` : '';
     }
-  }
 
+    if (!data || data.length === 0) {
+      list.innerHTML = '<p style="color:rgba(196,181,253,.4);font-size:.88rem;text-align:center;padding:2.5rem 0">Không có bài viết nào.</p>';
+      return;
+    }
+
+    const catLabels = { futures:'📈 Futures', onchain:'⛓️ Onchain', p2p:'💱 P2P', basics:'📚 Cơ Bản', tools:'🔧 Tools' };
+
+    list.innerHTML = data.map(p => {
+      const date = new Date(p.created_at).toLocaleString('vi-VN');
+      const cat  = escHtml(catLabels[p.category] || p.category);
+      const id   = jsEsc(p.id);
+      let actions = '';
+      if (tab === 'pending') {
+        actions = `<button class="btn-primary"   style="font-size:.78rem;padding:.35rem .85rem" onclick="ktaApprove('${id}')">✅ Duyệt</button>
+                   <button class="btn-secondary" style="font-size:.78rem;padding:.35rem .85rem;color:#f87171" onclick="ktaReject('${id}')">❌ Từ Chối</button>`;
+      } else if (tab === 'published') {
+        actions = `<button class="btn-secondary" style="font-size:.78rem;padding:.35rem .85rem" onclick="ktaTogglePin('${id}',${p.pinned ? 'true' : 'false'})">${p.pinned ? '📌 Bỏ Ghim' : '📌 Ghim'}</button>
+                   <button class="btn-secondary" style="font-size:.78rem;padding:.35rem .85rem;color:#f87171" onclick="ktaDelete('${id}')">🗑️ Xoá</button>`;
+      } else {
+        actions = `<button class="btn-secondary" style="font-size:.78rem;padding:.35rem .85rem" onclick="ktaApprove('${id}')">↩️ Duyệt Lại</button>
+                   <button class="btn-secondary" style="font-size:.78rem;padding:.35rem .85rem;color:#f87171" onclick="ktaDelete('${id}')">🗑️ Xoá</button>`;
+      }
+      return `
+        <div style="background:rgba(255,255,255,.03);border:1px solid rgba(139,92,246,.18);border-radius:12px;padding:1rem 1.2rem;margin-bottom:.8rem">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;flex-wrap:wrap">
+            <div style="flex:1;min-width:0">
+              <div style="font-weight:700;color:#e9d5ff;font-size:.88rem;margin-bottom:.25rem">${escHtml(p.title)}</div>
+              <div style="font-size:.76rem;color:rgba(196,181,253,.45);margin-bottom:.45rem">${cat} · 👤 ${escHtml(p.author_name||'')} · ${date}</div>
+              ${p.excerpt ? `<div style="font-size:.8rem;color:rgba(196,181,253,.6);line-height:1.5">${escHtml(p.excerpt.substring(0,150))}${p.excerpt.length>150?'…':''}</div>` : ''}
+            </div>
+            <div style="display:flex;gap:.4rem;flex-shrink:0;flex-wrap:wrap;align-items:flex-start">${actions}</div>
+          </div>
+        </div>`;
+    }).join('');
+  } catch(e) {
+    list.innerHTML = `<p style="color:#f87171;font-size:.88rem">Lỗi: ${escHtml(e.message)}</p>`;
+  }
+}
+
+async function ktaApprove(id) {
+  if (!window._supabase) return;
+  await window._supabase.from('knowledge_posts').update({ status: 'published' }).eq('id', id);
+  showKtaTab(_ktaTab);
+}
+async function ktaReject(id) {
+  if (!window._supabase) return;
+  await window._supabase.from('knowledge_posts').update({ status: 'rejected' }).eq('id', id);
+  showKtaTab(_ktaTab);
+}
+async function ktaTogglePin(id, currentPin) {
+  if (!window._supabase) return;
+  await window._supabase.from('knowledge_posts').update({ pinned: !currentPin }).eq('id', id);
+  showKtaTab(_ktaTab);
+}
+async function ktaDelete(id) {
+  if (!confirm('Xoá bài viết này? Không thể hoàn tác.')) return;
+  if (!window._supabase) return;
+  await window._supabase.from('knowledge_posts').delete().eq('id', id);
+  showKtaTab(_ktaTab);
+}
+
+// Admin can also create posts directly (published immediately, no approval needed)
+function openKtAdminPost() {
+  ['kta-w-title','kta-w-excerpt','kta-w-content','kta-w-cover','kta-w-yt'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = '';
+  });
+  const cat = document.getElementById('kta-w-cat'); if (cat) cat.value = '';
+  const err = document.getElementById('kta-w-error'); if (err) err.style.display = 'none';
+  const modal = document.getElementById('kta-write-modal');
+  if (modal) modal.style.display = 'flex';
+}
+function closeKtaWrite() {
+  const modal = document.getElementById('kta-write-modal');
+  if (modal) modal.style.display = 'none';
+}
+async function submitKtaPost() {
+  const title   = (document.getElementById('kta-w-title')?.value   || '').trim();
+  const cat     =  document.getElementById('kta-w-cat')?.value     || '';
+  const excerpt = (document.getElementById('kta-w-excerpt')?.value || '').trim();
+  const content = (document.getElementById('kta-w-content')?.value || '').trim();
+  const cover   = (document.getElementById('kta-w-cover')?.value   || '').trim();
+  const yt      = (document.getElementById('kta-w-yt')?.value      || '').trim();
+  const errEl   =  document.getElementById('kta-w-error');
+  const btn     =  document.getElementById('kta-w-submit');
+  const showErr = msg => { if (errEl) { errEl.textContent = msg; errEl.style.display = 'block'; } };
+  if (errEl) errEl.style.display = 'none';
+  if (!title)   return showErr('Vui lòng nhập tiêu đề.');
+  if (!cat)     return showErr('Vui lòng chọn danh mục.');
+  if (!excerpt) return showErr('Vui lòng nhập tóm tắt ngắn.');
+  if (!content) return showErr('Vui lòng nhập nội dung.');
+  if (btn) { btn.disabled = true; btn.textContent = 'Đang lưu...'; }
+  try {
+    const { error } = await window._supabase.from('knowledge_posts').insert([{
+      title, category: cat, excerpt, content,
+      cover_image: cover || null, youtube_url: yt || null,
+      author_name: 'Admin', status: 'published', pinned: false
+    }]);
+    if (error) throw error;
+    closeKtaWrite();
+    showKtaTab('published');
+  } catch(e) {
+    showErr('Lỗi: ' + (e.message || 'Không xác định'));
+    if (btn) { btn.disabled = false; btn.textContent = 'Đăng Bài'; }
+  }
+}
 </script>
-</body>
-</html>
+
+<!-- Admin: Write Knowledge Post Modal -->
+<div id="kta-write-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:6000;align-items:center;justify-content:center;padding:1.5rem">
+  <div style="background:#120c2a;border:1px solid rgba(139,92,246,.35);border-radius:20px;width:100%;max-width:580px;max-height:90vh;overflow-y:auto;padding:2rem;position:relative">
+    <button onclick="closeKtaWrite()" style="position:absolute;top:1rem;right:1rem;background:rgba(255,255,255,.07);border:none;color:#c4b5d9;width:32px;height:32px;border-radius:50%;font-size:1rem;cursor:pointer">✕</button>
+    <h3 style="color:#e9d5ff;margin:0 0 1.5rem;font-size:1rem;font-weight:700">📖 Đăng Bài Kiến Thức</h3>
+    <div style="display:flex;flex-direction:column;gap:.9rem">
+      <div><label style="display:block;font-size:.76rem;font-weight:600;color:rgba(196,181,253,.6);margin-bottom:.3rem;text-transform:uppercase;letter-spacing:.4px">Tiêu đề *</label>
+        <input id="kta-w-title" type="text" placeholder="Tiêu đề bài viết..." style="width:100%;box-sizing:border-box;background:rgba(255,255,255,.06);border:1px solid rgba(139,92,246,.25);border-radius:10px;color:#e9d5ff;padding:.55rem .8rem;font-size:.86rem;font-family:inherit;outline:none"></div>
+      <div><label style="display:block;font-size:.76rem;font-weight:600;color:rgba(196,181,253,.6);margin-bottom:.3rem;text-transform:uppercase;letter-spacing:.4px">Danh mục *</label>
+        <select id="kta-w-cat" style="width:100%;background:rgba(255,255,255,.06);border:1px solid rgba(139,92,246,.25);border-radius:10px;color:#e9d5ff;padding:.55rem .8rem;font-size:.86rem;font-family:inherit;outline:none;cursor:pointer">
+          <option value="">-- Chọn --</option>
+          <option value="futures">📈 Futures</option><option value="onchain">⛓️ Onchain</option>
+          <option value="p2p">💱 P2P</option><option value="basics">📚 Cơ Bản</option><option value="tools">🔧 Tools</option>
+        </select></div>
+      <div><label style="display:block;font-size:.76rem;font-weight:600;color:rgba(196,181,253,.6);margin-bottom:.3rem;text-transform:uppercase;letter-spacing:.4px">Tóm tắt *</label>
+        <textarea id="kta-w-excerpt" rows="2" placeholder="1–2 câu mô tả..." style="width:100%;box-sizing:border-box;background:rgba(255,255,255,.06);border:1px solid rgba(139,92,246,.25);border-radius:10px;color:#e9d5ff;padding:.55rem .8rem;font-size:.86rem;font-family:inherit;outline:none;resize:vertical"></textarea></div>
+      <div><label style="display:block;font-size:.76rem;font-weight:600;color:rgba(196,181,253,.6);margin-bottom:.3rem;text-transform:uppercase;letter-spacing:.4px">Nội dung *</label>
+        <textarea id="kta-w-content" rows="6" placeholder="Nội dung bài viết..." style="width:100%;box-sizing:border-box;background:rgba(255,255,255,.06);border:1px solid rgba(139,92,246,.25);border-radius:10px;color:#e9d5ff;padding:.55rem .8rem;font-size:.86rem;font-family:inherit;outline:none;resize:vertical"></textarea></div>
+      <div><label style="display:block;font-size:.76rem;font-weight:600;color:rgba(196,181,253,.6);margin-bottom:.3rem;text-transform:uppercase;letter-spacing:.4px">Ảnh bìa (tuỳ chọn)</label>
+        <input id="kta-w-cover" type="url" placeholder="https://..." style="width:100%;box-sizing:border-box;background:rgba(255,255,255,.06);border:1px solid rgba(139,92,246,.25);border-radius:10px;color:#e9d5ff;padding:.55rem .8rem;font-size:.86rem;font-family:inherit;outline:none"></div>
+      <div><label style="display:block;font-size:.76rem;font-weight:600;color:rgba(196,181,253,.6);margin-bottom:.3rem;text-transform:uppercase;letter-spacing:.4px">YouTube (tuỳ chọn)</label>
+        <input id="kta-w-yt" type="url" placeholder="https://youtube.com/..." style="width:100%;box-sizing:border-box;background:rgba(255,255,255,.06);border:1px solid rgba(139,92,246,.25);border-radius:10px;color:#e9d5ff;padding:.55rem .8rem;font-size:.86rem;font-family:inherit;outline:none"></div>
+      <div id="kta-w-error" style="display:none;color:#f87171;font-size:.8rem;padding:.45rem .8rem;background:rgba(248,113,113,.08);border-radius:8px"></div>
+      <div style="display:flex;gap:.6rem;justify-content:flex-end">
+        <button onclick="closeKtaWrite()" style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);color:#c4b5d9;padding:.5rem 1.2rem;border-radius:50px;font-size:.83rem;cursor:pointer;font-family:inherit">Huỷ</button>
+        <button id="kta-w-submit" onclick="submitKtaPost()" class="btn-primary" style="font-size:.83rem;padding:.5rem 1.4rem">Đăng Bài</button>
+      </div>
+    </div>
+  </div>
+</div>

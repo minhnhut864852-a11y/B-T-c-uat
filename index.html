@@ -369,6 +369,31 @@ section.hero {
   50%      { box-shadow: 0 0 0 6px rgba(251,191,36,0.18); }
 }
 
+/* USDT — Tether green */
+.usdt-ring {
+  background: linear-gradient(135deg, #26A17B, #1a7a5e);
+  color: #fff;
+}
+.hpc-usdt-theme {
+  border-color: rgba(38,161,123,0.28) !important;
+  background: linear-gradient(135deg, rgba(38,161,123,0.06) 0%, rgba(8,2,22,0.72) 60%) !important;
+}
+.hpc-usdt-theme .hpc-coin-glow {
+  background: radial-gradient(ellipse at 0% 50%, rgba(38,161,123,0.12) 0%, transparent 70%) !important;
+}
+.hpc-usdt-theme:hover {
+  border-color: rgba(38,161,123,0.55) !important;
+  box-shadow: 0 0 32px rgba(38,161,123,0.2), 0 8px 40px rgba(38,161,123,0.12), inset 0 1px 0 rgba(255,255,255,0.06) !important;
+}
+.hpc-usdt-theme .usdt-ring {
+  animation: ringPulse-usdt 2.8s ease-in-out infinite !important;
+  animation-delay: 2.7s !important;
+}
+@keyframes ringPulse-usdt {
+  0%,100% { box-shadow: 0 0 0 0 rgba(38,161,123,0); }
+  50%      { box-shadow: 0 0 0 6px rgba(38,161,123,0.18); }
+}
+
 /* ═══════ CTA STRIP ═══════ */
 .hero-cta-strip {
   position: relative !important;
@@ -520,6 +545,9 @@ section.hero {
   font-size:.88rem;color:#d4dbe8;
 }
 .promo-perks li .perk-icon { font-size:1.1rem;flex-shrink:0;margin-top:.05rem; }
+.idx-btn-svg{width:14px;height:14px;vertical-align:middle;display:inline-block}
+.idx-perk-svg{width:18px;height:18px;vertical-align:middle;flex-shrink:0;margin-top:.05rem;display:inline-block}
+.idx-value-svg{width:18px;height:18px;vertical-align:middle;display:inline-block;margin-right:2px}
 .promo-cta {
   width:100%;padding:.85rem;border:none;border-radius:12px;cursor:pointer;
   background:linear-gradient(90deg,#00c87a,#0099ff);
@@ -750,6 +778,7 @@ section.hero {
 </script>
 </head>
 <body>
+<script>if(localStorage.getItem('botoc-theme')==='light'){document.body.classList.add('light-mode');}</script>
 
 <!-- UAT Environment Banner — only visible on uat.botoc.trading -->
 <script>
@@ -777,12 +806,13 @@ section.hero {
       <li><a href="#news" data-vi="Tin Tức" data-en="News">Tin Tức</a></li>
       <li><a href="#events" data-vi="Event" data-en="Events">Event</a></li>
       <li><a href="#reviews" data-vi="Review" data-en="Reviews">Review</a></li>
+      <li><a href="#kien-thuc" data-vi="Kiến Thức Crypto" data-en="Crypto Knowledge"><img src="icon_knowledge.svg" style="width:16px;height:16px;vertical-align:middle;margin-right:4px" alt=""> Kiến Thức Crypto</a></li>
       <li class="has-submenu">
         <a href="#newbie" data-vi="Người Mới" data-en="Beginners">Người Mới</a>
         <div class="submenu">
-          <a href="#newbie" onclick="setTimeout(()=>switchNewbieTab('exchanges',document.querySelectorAll('.newbie-tab-btn')[0]),100)" data-vi="🤝 Đối Tác" data-en="🤝 Partners">🤝 Đối Tác</a>
+          <a href="#newbie" onclick="setTimeout(()=>switchNewbieTab('exchanges',document.querySelectorAll('.newbie-tab-btn')[0]),100)" data-vi="Đối Tác" data-en="Partners"><img src="icon_partner.svg" style="width:16px;height:16px;vertical-align:middle;margin-right:4px" alt=""> Đối Tác</a>
           <a href="#newbie" onclick="setTimeout(()=>switchNewbieTab('p2p',document.querySelectorAll('.newbie-tab-btn')[1]),100)" data-vi="Kiến Thức P2P" data-en="P2P Knowledge"><img src="icon_light.svg" style="width:16px;height:16px;vertical-align:middle;margin-right:4px" alt=""> Kiến Thức P2P</a>
-          <a href="#newbie" onclick="setTimeout(()=>switchNewbieTab('faq',document.querySelectorAll('.newbie-tab-btn')[2]),100)" data-vi="❓ Thường Gặp" data-en="❓ FAQ">❓ Thường Gặp</a>
+          <a href="#newbie" onclick="setTimeout(()=>switchNewbieTab('faq',document.querySelectorAll('.newbie-tab-btn')[2]),100)" data-vi="Thường Gặp" data-en="FAQ"><img src="icon_FAQ_1.svg" style="width:16px;height:16px;vertical-align:middle;margin-right:4px" alt=""> Thường Gặp</a>
         </div>
       </li>
       <li class="has-submenu">
@@ -824,6 +854,7 @@ section.hero {
       <button class="lang-btn active" onclick="setLang('vi')">VI</button>
       <button class="lang-btn" onclick="setLang('en')">EN</button>
     </div>
+    <button id="theme-toggle-btn" class="theme-toggle-btn" onclick="toggleTheme()" title="Chế độ sáng/tối">☀️</button>
     <button class="hamburger" id="hamburger" onclick="toggleMenu()">
       <span></span><span></span><span></span>
     </button>
@@ -835,9 +866,14 @@ section.hero {
   <a href="#news" onclick="closeMenu()" data-vi="Tin Tức" data-en="News">Tin Tức</a>
   <a href="#events" onclick="closeMenu()" data-vi="Event" data-en="Events">Event</a>
   <a href="#reviews" onclick="closeMenu()" data-vi="Review Về Nhóm" data-en="Group Reviews">Review Về Nhóm</a>
+  <a href="#kien-thuc" onclick="closeMenu()" data-vi="Kiến Thức Crypto" data-en="Crypto Knowledge"><img src="icon_knowledge.svg" style="width:16px;height:16px;vertical-align:middle;margin-right:4px" alt=""> Kiến Thức Crypto</a>
   <a href="#newbie" onclick="closeMenu()" data-vi="Người Mới" data-en="Beginners">Người Mới</a>
   <a href="#about" onclick="closeMenu()" data-vi="Về Chúng Tôi" data-en="About Us">Về Chúng Tôi</a>
   <a href="#contact" onclick="closeMenu()" data-vi="Liên Hệ" data-en="Contact Us">Liên Hệ</a>
+  <div class="mob-theme-row">
+    <span>Chế độ sáng/tối</span>
+    <button id="theme-toggle-btn-mob" class="theme-toggle-btn" onclick="toggleTheme()" style="margin-left:auto">☀️</button>
+  </div>
   <a href="#" id="mob-join-a" onclick="openRegisterModal();closeMenu();return false;" class="mob-cta" data-vi="Tham Gia Ngay" data-en="Join Now">Tham Gia Ngay</a>
   <!-- Mobile member area -->
   <div id="mob-login-wrap" style="display:flex;gap:.6rem;align-items:center;padding:.2rem 0">
@@ -1039,6 +1075,11 @@ section.hero {
           <div class="hpc-col-label">24H</div>
         </div>
         <div class="hpc-vdiv"></div>
+        <div class="hpc-col-stat">
+          <div class="hpc-volume" id="hero-gold-vol">Spot</div>
+          <div class="hpc-col-label">VOLUME</div>
+        </div>
+      </div>
       <!-- USDT/VND -->
       <div class="hero-price-card glass-card hpc-usdt-theme" id="hpc-usdt">
         <div class="hpc-coin-glow"></div>
@@ -1134,12 +1175,10 @@ section.hero {
       </svg>
     </div>
     <div class="trade-table" style="position:relative">
-      <!-- Lock overlay — shown for non-members, hidden after login -->
-      <div id="trade-lock-overlay" style="position:absolute;inset:0;backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px);background:rgba(7,3,15,0.55);z-index:10;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.75rem;padding:2rem">
-        <div style="font-size:2rem">🔐</div>
-        <p style="color:#e2d9f3;font-weight:700;font-size:1rem;text-align:center;margin:0" data-vi="Đăng nhập để xem chi tiết lệnh" data-en="Login to view trade details">Đăng nhập để xem chi tiết lệnh</p>
-        <p style="color:#9d8ec7;font-size:.82rem;text-align:center;margin:0" data-vi="Chỉ dành cho thành viên đã được duyệt" data-en="For approved members only">Chỉ dành cho thành viên đã được duyệt</p>
-        <button onclick="gaEvent('click_login_hieu_suat',{source:'trade_lock_overlay'});openMemberLogin()" style="margin-top:.25rem;padding:.65rem 1.75rem;border:none;border-radius:10px;background:linear-gradient(135deg,#8b5cf6,#6d28d9);color:#fff;font-size:.88rem;font-weight:700;cursor:pointer;transition:opacity .2s" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'" data-vi="Đăng Nhập Ngay" data-en="Login Now">Đăng Nhập Ngay</button>
+      <!-- Login hint banner — visible for non-members, hidden after login -->
+      <div id="trade-lock-overlay" style="display:flex;align-items:center;justify-content:center;gap:.75rem;padding:.6rem 1rem;margin-bottom:.5rem;background:rgba(139,92,246,0.08);border:1px solid rgba(139,92,246,0.2);border-radius:10px;flex-wrap:wrap">
+        <span style="font-size:.85rem;color:rgba(216,180,254,0.75)" data-vi="🔒 Click vào Tuần để xem chi tiết lệnh — dành cho thành viên" data-en="🔒 Click a Week row to view trade details — members only">🔒 Click vào Tuần để xem chi tiết lệnh — dành cho thành viên</span>
+        <button onclick="gaEvent('click_login_hieu_suat',{source:'trade_hint_banner'});openMemberLogin()" style="padding:.3rem 1rem;border:none;border-radius:8px;background:linear-gradient(135deg,#8b5cf6,#6d28d9);color:#fff;font-size:.8rem;font-weight:600;cursor:pointer" data-vi="Đăng Nhập" data-en="Login">Đăng Nhập</button>
       </div>
       <table>
         <thead><tr>
@@ -1163,7 +1202,7 @@ section.hero {
     <div class="section-label" data-vi="// Cập Nhật Mới Nhất" data-en="// Latest Updates">// Cập Nhật Mới Nhất</div>
     <h2 class="section-title" data-vi="Tin Tức" data-en="News">Tin Tức</h2>
   </div>
-  <div class="news-grid reveal">
+  <div class="news-grid reveal" id="news-grid">
     <div class="news-card reveal">
       <div class="news-img" style="background:linear-gradient(135deg,#0d0720,#2d1052);position:relative;overflow:hidden;min-height:185px;">
         <svg viewBox="0 0 400 185" xmlns="http://www.w3.org/2000/svg" style="position:absolute;inset:0;width:100%;height:100%;">
@@ -1400,6 +1439,137 @@ section.hero {
   <div id="reviews-empty" style="display:none;text-align:center;color:#6b5e8a;font-size:0.9rem;padding:2.5rem 1rem;max-width:1200px;margin:0 auto" data-vi="Chưa có review nào. Hãy là thành viên đầu tiên chia sẻ trải nghiệm!" data-en="No reviews yet. Be the first member to share!">Chưa có review nào. Hãy là thành viên đầu tiên chia sẻ trải nghiệm!</div>
 </section>
 
+<!-- KIẾN THỨC CRYPTO -->
+<style>
+.kt-cat-btn{background:rgba(139,92,246,.12);border:1px solid rgba(139,92,246,.25);color:rgba(196,181,253,.8);padding:.38rem .95rem;border-radius:50px;font-size:.8rem;cursor:pointer;transition:all .18s;font-family:inherit}
+.kt-cat-btn:hover,.kt-cat-btn.active{background:rgba(139,92,246,.35);border-color:rgba(139,92,246,.6);color:#e9d5ff}
+.kt-card{background:rgba(255,255,255,.04);border:1px solid rgba(139,92,246,.2);border-radius:16px;overflow:hidden;cursor:pointer;transition:transform .2s,border-color .2s,box-shadow .2s;display:flex;flex-direction:column}
+.kt-card:hover{transform:translateY(-3px);border-color:rgba(139,92,246,.5);box-shadow:0 8px 32px rgba(139,92,246,.15)}
+.kt-card-cover{width:100%;height:155px;background:linear-gradient(135deg,rgba(139,92,246,.15),rgba(79,70,229,.1));display:flex;align-items:center;justify-content:center;font-size:2.5rem;flex-shrink:0}
+.kt-card-cover img{width:100%;height:100%;object-fit:cover}
+.kt-card-body{padding:.9rem 1rem;flex:1;display:flex;flex-direction:column;gap:.4rem}
+.kt-tag{display:inline-block;font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;padding:.18rem .55rem;border-radius:4px;background:rgba(167,139,250,.15);color:#a78bfa}
+.kt-card-title{font-size:.92rem;font-weight:700;color:#e9d5ff;line-height:1.4;margin:0}
+.kt-card-excerpt{font-size:.8rem;color:rgba(196,181,253,.6);line-height:1.5;flex:1}
+.kt-card-meta{font-size:.72rem;color:rgba(196,181,253,.38);display:flex;justify-content:space-between;padding-top:.5rem;border-top:1px solid rgba(139,92,246,.1);margin-top:auto}
+.kt-pin-badge{display:inline-block;background:rgba(251,191,36,.15);color:#fbbf24;border-radius:3px;font-size:.65rem;padding:.1rem .35rem;margin-left:.3rem;font-weight:700}
+.kt-modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:5000;overflow-y:auto;padding:2rem 1rem}
+.kt-modal-box{max-width:740px;margin:0 auto;background:#120c2a;border:1px solid rgba(139,92,246,.3);border-radius:20px;overflow:hidden;position:relative}
+.kt-modal-close{position:absolute;top:1rem;right:1rem;background:rgba(255,255,255,.07);border:none;color:#c4b5d9;width:34px;height:34px;border-radius:50%;font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:10;transition:background .15s}
+.kt-modal-close:hover{background:rgba(255,255,255,.13)}
+.kt-form-label{display:block;font-size:.78rem;font-weight:600;color:rgba(196,181,253,.7);margin-bottom:.4rem;text-transform:uppercase;letter-spacing:.4px}
+.kt-form-input{width:100%;box-sizing:border-box;background:rgba(255,255,255,.06);border:1px solid rgba(139,92,246,.25);border-radius:10px;color:#e9d5ff;padding:.6rem .85rem;font-size:.88rem;font-family:inherit;outline:none;transition:border-color .18s}
+.kt-form-input:focus{border-color:rgba(139,92,246,.6)}
+.kt-form-select{appearance:none;cursor:pointer}
+.kt-form-textarea{resize:vertical;min-height:90px}
+
+/* ── Light / Dark mode toggle ── */
+.theme-toggle-btn{background:rgba(168,85,247,.12);border:1px solid rgba(168,85,247,.3);border-radius:50%;width:32px;height:32px;cursor:pointer;font-size:.9rem;display:flex;align-items:center;justify-content:center;transition:background .2s;flex-shrink:0;padding:0}
+.theme-toggle-btn:hover{background:rgba(168,85,247,.28)}
+.mob-theme-row{display:flex;align-items:center;gap:.75rem;padding:.6rem 1.5rem;font-size:.85rem;color:rgba(216,180,254,.7)}
+
+/* ── Light mode: CSS filter inversion ── */
+body.light-mode{filter:invert(1) hue-rotate(180deg)}
+body.light-mode img,
+body.light-mode video,
+body.light-mode iframe,
+body.light-mode .nav-logo img{filter:invert(1) hue-rotate(180deg)}
+/* SVG icons use currentColor — counter-invert so they look normal */
+body.light-mode img[src$=".svg"]{filter:invert(1) hue-rotate(180deg)}
+</style>
+
+<section id="kien-thuc" style="padding:5rem 1.5rem 4rem;background:linear-gradient(180deg,#0d0820 0%,#080515 100%)">
+  <div style="max-width:1100px;margin:0 auto">
+    <div class="reveal" style="text-align:center;margin-bottom:2.5rem">
+      <div class="section-label" data-vi="// Cộng Đồng Chia Sẻ" data-en="// Community Knowledge">// Cộng Đồng Chia Sẻ</div>
+      <h2 class="section-title" data-vi="Kiến Thức Crypto" data-en="Crypto Knowledge"><img src="icon_knowledge.svg" style="width:16px;height:16px;vertical-align:middle;margin-right:4px" alt=""> Kiến Thức Crypto</h2>
+      <p style="color:var(--muted);font-size:.92rem;margin-top:.5rem;margin-bottom:0" data-vi="Bài viết và kinh nghiệm từ thành viên cộng đồng" data-en="Articles and experience from community members">Bài viết và kinh nghiệm từ thành viên cộng đồng</p>
+    </div>
+
+    <!-- Lock (logged out) -->
+    <div id="kt-lock" class="reveal" style="text-align:center;padding:3.5rem 2rem;background:rgba(139,92,246,.06);border:1px solid rgba(139,92,246,.2);border-radius:20px">
+      <div style="margin-bottom:1rem"><img src="icon_lock_1.svg" style="width:52px;height:52px" alt=""></div>
+      <h3 style="color:#c4b5d9;margin:0 0 .5rem;font-size:1.05rem;font-weight:700" data-vi="Dành riêng cho thành viên" data-en="Members only">Dành riêng cho thành viên</h3>
+      <p style="color:rgba(196,181,253,.5);font-size:.86rem;margin:0 0 1.5rem;line-height:1.6" data-vi="Đăng nhập để đọc và chia sẻ kiến thức cùng cộng đồng Bộ Tộc" data-en="Login to read and share knowledge with the BoToc community">Đăng nhập để đọc và chia sẻ kiến thức cùng cộng đồng Bộ Tộc</p>
+      <button onclick="openMemberLogin()" style="background:linear-gradient(135deg,#7c3aed,#4f46e5);border:none;color:#fff;padding:.6rem 1.8rem;border-radius:50px;font-size:.88rem;font-weight:600;cursor:pointer" data-vi="Đăng Nhập" data-en="Login">Đăng Nhập</button>
+    </div>
+
+    <!-- Content (logged in) -->
+    <div id="kt-content" style="display:none">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem;margin-bottom:1.8rem">
+        <div style="display:flex;gap:.45rem;flex-wrap:wrap">
+          <button class="kt-cat-btn active" data-cat="all" onclick="filterKt(this)" data-vi="Tất Cả" data-en="All">Tất Cả</button>
+          <button class="kt-cat-btn" data-cat="futures" onclick="filterKt(this)">📈 Futures</button>
+          <button class="kt-cat-btn" data-cat="onchain" onclick="filterKt(this)">⛓️ Onchain</button>
+          <button class="kt-cat-btn" data-cat="p2p" onclick="filterKt(this)">💱 P2P</button>
+          <button class="kt-cat-btn" data-cat="basics" onclick="filterKt(this)" data-vi="📚 Cơ Bản" data-en="📚 Basics">📚 Cơ Bản</button>
+          <button class="kt-cat-btn" data-cat="tools" onclick="filterKt(this)">🔧 Tools</button>
+        </div>
+        <button onclick="openKtWrite()" style="background:linear-gradient(135deg,#7c3aed,#4f46e5);border:none;color:#fff;padding:.5rem 1.15rem;border-radius:50px;font-size:.83rem;font-weight:600;cursor:pointer;white-space:nowrap" data-vi="✏️ Viết Bài" data-en="✏️ Write Post">✏️ Viết Bài</button>
+      </div>
+      <div id="kt-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:1.2rem"></div>
+      <div id="kt-empty" style="display:none;text-align:center;padding:3rem 1rem;color:rgba(196,181,253,.4);font-size:.9rem" data-vi="Chưa có bài viết nào trong mục này. Hãy là người đầu tiên chia sẻ! ✨" data-en="No posts yet. Be the first to share! ✨">Chưa có bài viết nào trong mục này. Hãy là người đầu tiên chia sẻ! ✨</div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Kiến Thức: Post Detail Modal ── -->
+<div class="kt-modal-overlay" id="kt-detail-overlay" onclick="if(event.target===this)closeKtDetail()">
+  <div class="kt-modal-box">
+    <button class="kt-modal-close" onclick="closeKtDetail()">✕</button>
+    <div id="kt-detail-inner" style="padding:2rem 2rem 2.5rem"></div>
+  </div>
+</div>
+
+<!-- ── Kiến Thức: Write Post Modal ── -->
+<div class="kt-modal-overlay" id="kt-write-overlay" onclick="if(event.target===this)closeKtWrite()">
+  <div class="kt-modal-box" style="max-width:600px">
+    <button class="kt-modal-close" onclick="closeKtWrite()">✕</button>
+    <div style="padding:2rem">
+      <h3 style="color:#e9d5ff;margin:0 0 1.5rem;font-size:1.1rem;font-weight:700" data-vi="✏️ Viết Bài Mới" data-en="✏️ New Post">✏️ Viết Bài Mới</h3>
+      <div style="display:flex;flex-direction:column;gap:1rem">
+        <div>
+          <label class="kt-form-label">Tiêu đề <span style="color:#f87171">*</span></label>
+          <input id="kt-w-title" class="kt-form-input" type="text" placeholder="Tiêu đề bài viết...">
+        </div>
+        <div>
+          <label class="kt-form-label">Danh mục <span style="color:#f87171">*</span></label>
+          <select id="kt-w-cat" class="kt-form-input kt-form-select">
+            <option value="">-- Chọn danh mục --</option>
+            <option value="futures">📈 Futures / Giao Dịch</option>
+            <option value="onchain">⛓️ Onchain</option>
+            <option value="p2p">💱 P2P</option>
+            <option value="basics">📚 Cơ Bản</option>
+            <option value="tools">🔧 Tools &amp; Tips</option>
+          </select>
+        </div>
+        <div>
+          <label class="kt-form-label">Tóm tắt ngắn <span style="color:#f87171">*</span></label>
+          <textarea id="kt-w-excerpt" class="kt-form-input kt-form-textarea" style="min-height:70px" placeholder="1–2 câu mô tả nội dung bài viết..."></textarea>
+        </div>
+        <div>
+          <label class="kt-form-label">Nội dung <span style="color:#f87171">*</span></label>
+          <textarea id="kt-w-content" class="kt-form-input kt-form-textarea" style="min-height:170px" placeholder="Viết nội dung bài viết tại đây..."></textarea>
+        </div>
+        <div>
+          <label class="kt-form-label">Link ảnh bìa <span style="color:rgba(196,181,253,.4)">(tuỳ chọn)</span></label>
+          <input id="kt-w-cover" class="kt-form-input" type="url" placeholder="https://...">
+        </div>
+        <div>
+          <label class="kt-form-label">Link YouTube <span style="color:rgba(196,181,253,.4)">(tuỳ chọn)</span></label>
+          <input id="kt-w-yt" class="kt-form-input" type="url" placeholder="https://youtube.com/watch?v=...">
+        </div>
+        <div id="kt-w-error" style="display:none;color:#f87171;font-size:.82rem;padding:.5rem .85rem;background:rgba(248,113,113,.08);border-radius:8px;border:1px solid rgba(248,113,113,.2)"></div>
+        <div style="display:flex;gap:.75rem;justify-content:flex-end">
+          <button onclick="closeKtWrite()" style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);color:#c4b5d9;padding:.55rem 1.3rem;border-radius:50px;font-size:.85rem;cursor:pointer;font-family:inherit" data-vi="Huỷ" data-en="Cancel">Huỷ</button>
+          <button id="kt-w-submit" onclick="submitKtPost()" style="background:linear-gradient(135deg,#7c3aed,#4f46e5);border:none;color:#fff;padding:.55rem 1.6rem;border-radius:50px;font-size:.85rem;font-weight:600;cursor:pointer;font-family:inherit" data-vi="Gửi Bài" data-en="Submit">Gửi Bài</button>
+        </div>
+        <p style="font-size:.75rem;color:rgba(196,181,253,.35);text-align:center;margin:0" data-vi="Bài viết sẽ được admin xét duyệt trước khi hiển thị" data-en="Posts will be reviewed by admin before publishing">Bài viết sẽ được admin xét duyệt trước khi hiển thị</p>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- NGUOI MOI -->
 <section id="newbie">
   <div class="newbie-container">
@@ -1410,9 +1580,9 @@ section.hero {
     </div>
     <div class="reveal">
       <div class="newbie-tabs">
-        <button onclick="switchNewbieTab('exchanges',this)" class="newbie-tab-btn active" data-vi="🤝 Đối Tác" data-en="🤝 Partners">🤝 Đối Tác</button>
+        <button onclick="switchNewbieTab('exchanges',this)" class="newbie-tab-btn active" data-vi="Đối Tác" data-en="Partners"><img src="icon_partner.svg" style="width:16px;height:16px;vertical-align:middle;margin-right:4px" alt=""> Đối Tác</button>
         <button class="newbie-tab-btn" onclick="switchNewbieTab('p2p',this)" data-vi="Kiến Thức P2P" data-en="P2P Knowledge"><img src="icon_light.svg" style="width:16px;height:16px;vertical-align:middle;margin-right:4px" alt=""> Kiến Thức P2P</button>
-        <button class="newbie-tab-btn" onclick="switchNewbieTab('faq',this)" data-vi="❓ Thường Gặp" data-en="❓ FAQ">❓ Thường Gặp</button>
+        <button class="newbie-tab-btn" onclick="switchNewbieTab('faq',this)" data-vi="Thường Gặp" data-en="FAQ"><img src="icon_FAQ_1.svg" style="width:16px;height:16px;vertical-align:middle;margin-right:4px" alt=""> Thường Gặp</button>
       </div>
       <div class="newbie-tab-content active" id="ntab-exchanges">
         <!-- Bottom: Exchange sign-up -->
@@ -1632,7 +1802,7 @@ section.hero {
       <div class="about-info-col" id="about-values">
         <div class="about-col-header" data-vi="Giá Trị Cốt Lõi" data-en="Core Values">Giá Trị Cốt Lõi</div>
         <div class="value-card-inline">
-          <h4>🛡️ <span data-vi="Hệ Thống" data-en="System">Hệ Thống</span></h4>
+          <h4><img src="icon_shield.svg" class="idx-value-svg" alt=""> <span data-vi="Hệ Thống" data-en="System">Hệ Thống</span></h4>
           <p data-vi="Lợi nhuận là kết quả — bảo toàn vốn mới là nền tảng. Mỗi lệnh được kiểm soát với tỷ lệ Risk/Reward rõ ràng, không để cảm xúc chi phối." data-en="Profit is the result — capital preservation is the foundation. Every trade is controlled with a clear Risk/Reward ratio, no emotional decision-making.">Lợi nhuận là kết quả — bảo toàn vốn mới là nền tảng. Mỗi lệnh được kiểm soát với tỷ lệ Risk/Reward rõ ràng, không để cảm xúc chi phối.</p>
         </div>
         <div class="value-card-inline">
@@ -1640,11 +1810,11 @@ section.hero {
           <p data-vi="Thành công cá nhân gắn liền với sức mạnh cộng đồng. Chia sẻ kiến thức, hỗ trợ lẫn nhau, cùng vượt qua drawdown. Một bộ tộc kỷ luật sẽ đi xa." data-en="Personal success is tied to community strength. Share knowledge, support each other, overcome drawdowns together. A disciplined tribe goes far.">Thành công cá nhân gắn liền với sức mạnh cộng đồng. Chia sẻ kiến thức, hỗ trợ lẫn nhau, cùng vượt qua drawdown. Một bộ tộc kỷ luật sẽ đi xa.</p>
         </div>
         <div class="value-card-inline">
-          <h4>🚀 <span data-vi="Đổi Mới" data-en="Innovation">Đổi Mới</span></h4>
+          <h4><img src="icon_rocket.svg" class="idx-value-svg" alt=""> <span data-vi="Đổi Mới" data-en="Innovation">Đổi Mới</span></h4>
           <p data-vi="Liên tục nâng cấp hệ thống chiến lược, tối ưu quản trị rủi ro, ứng dụng công cụ mới. Thị trường luôn thay đổi — trader không đổi mới sẽ bị đào thải." data-en="Continuously upgrade strategy systems, optimize risk management, apply new tools. The market always changes — traders who don't innovate get left behind.">Liên tục nâng cấp hệ thống chiến lược, tối ưu quản trị rủi ro, ứng dụng công cụ mới. Thị trường luôn thay đổi — trader không đổi mới sẽ bị đào thải.</p>
         </div>
         <div class="value-card-inline">
-          <h4>📈 <span data-vi="Tư Duy Dài Hạn" data-en="Long-Term Thinking">Tư Duy Dài Hạn</span></h4>
+          <h4><img src="icon_grown.svg" class="idx-value-svg" alt=""> <span data-vi="Tư Duy Dài Hạn" data-en="Long-Term Thinking">Tư Duy Dài Hạn</span></h4>
           <p data-vi="Không kiếm kết quả ngắn hạn. Xây dựng tư duy dài hạn, năng lực tự giao dịch độc lập và sự trưởng thành tài chính qua từng chu kỳ thị trường." data-en="No short-term gains chasing. Build long-term mindset, independent trading ability and financial maturity through each market cycle.">Không kiếm kết quả ngắn hạn. Xây dựng tư duy dài hạn, năng lực tự giao dịch độc lập và sự trưởng thành tài chính qua từng chu kỳ thị trường.</p>
         </div>
       </div>
@@ -1662,17 +1832,7 @@ section.hero {
     <div class="contact-grid">
       <div class="contact-card" onclick="window.location='mailto:dongan812001@gmail.com'" style="cursor:pointer;">
         <div class="contact-icon email">
-          <svg width="30" height="30" viewBox="0 0 52 52" xmlns="http://www.w3.org/2000/svg">
-            <rect width="52" height="52" rx="14" fill="url(#emailG)"/>
-            <rect x="10" y="15" width="32" height="22" rx="3" fill="rgba(255,255,255,0.18)" stroke="white" stroke-width="1.8"/>
-            <path d="M10 18L26 28L42 18" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-            <defs>
-              <linearGradient id="emailG" x1="0" y1="0" x2="52" y2="52" gradientUnits="userSpaceOnUse">
-                <stop offset="0%" stop-color="#a855f7"/>
-                <stop offset="100%" stop-color="#7c3aed"/>
-              </linearGradient>
-            </defs>
-          </svg>
+          <img src="icon_mail.svg" style="width:44px;height:44px" alt="Email">
         </div>
         <div class="contact-info">
           <h4>Email</h4>
@@ -1682,21 +1842,7 @@ section.hero {
       </div>
       <div class="contact-card" onclick="window.open('https://zalo.me/0889782249','_blank')" style="cursor:pointer;">
         <div class="contact-icon zalo">
-          <svg width="30" height="30" viewBox="0 0 30 30" xmlns="http://www.w3.org/2000/svg">
-            <rect width="30" height="30" rx="7" fill="url(#zaloG)"/>
-            <!-- Zalo wordmark -->
-            <text x="15" y="16" text-anchor="middle" dominant-baseline="middle"
-              font-family="'Arial Rounded MT Bold', 'Arial Black', Arial, sans-serif"
-              font-weight="800" font-size="9.5" fill="white" letter-spacing="0.3">zalo</text>
-            <!-- Small chat dot underneath to suggest messenger -->
-            <circle cx="15" cy="22" r="1.3" fill="white" opacity="0.7"/>
-            <defs>
-              <linearGradient id="zaloG" x1="0" y1="0" x2="30" y2="30" gradientUnits="userSpaceOnUse">
-                <stop offset="0%" stop-color="#0184FF"/>
-                <stop offset="100%" stop-color="#0051CC"/>
-              </linearGradient>
-            </defs>
-          </svg>
+          <img src="icon_zalo.svg" style="width:44px;height:44px" alt="Zalo">
         </div>
         <div class="contact-info">
           <h4>Zalo</h4>
@@ -1706,16 +1852,7 @@ section.hero {
       </div>
       <div class="contact-card" onclick="if(window.gaEvent)gaEvent('click_telegram',{source:'contact_card'});window.open('https://t.me/+Ui0Tj7FsdUpkMjFl','_blank')" style="cursor:pointer;">
         <div class="contact-icon tele">
-          <svg width="30" height="30" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="12" cy="12" r="12" fill="url(#teleGrad)"/>
-            <path d="M5.5 11.8l10.3-3.97c.48-.17.9.12.74.85l-1.75 8.24c-.13.58-.48.72-.97.45l-2.7-1.99-1.3 1.25c-.14.14-.27.26-.55.26l.2-2.76 5.07-4.58c.22-.2-.05-.3-.34-.11L7.3 13.5 4.65 12.7c-.56-.17-.57-.56.17-.83z" fill="white"/>
-            <defs>
-              <linearGradient id="teleGrad" x1="0" y1="0" x2="24" y2="24" gradientUnits="userSpaceOnUse">
-                <stop offset="0%" stop-color="#2AABEE"/>
-                <stop offset="100%" stop-color="#229ED9"/>
-              </linearGradient>
-            </defs>
-          </svg>
+          <img src="icon_telegram.svg" style="width:44px;height:44px" alt="Telegram">
         </div>
         <div class="contact-info">
           <h4>Telegram</h4>
@@ -1751,6 +1888,7 @@ section.hero {
 
     <script src="script.js"></script>
 
+<!-- ── Daily News Detail Modal ── -->
 <div class="dnn-modal" id="dnn-modal" onclick="if(event.target===this)closeDnnModal()">
   <button class="dnn-modal-nav prev" id="dnn-modal-prev" onclick="dnnModalNav(-1)" aria-label="Trước">&#8249;</button>
   <button class="dnn-modal-nav next" id="dnn-modal-next" onclick="dnnModalNav(1)" aria-label="Tiếp">&#8250;</button>
@@ -1975,9 +2113,9 @@ section.hero {
     <div class="promo-title" data-vi="Hoàn Phí 20-30%++<br>+ Quà Hấp Dẫn!" data-en="20-30%++ Fee Rebate<br>+ Amazing Gifts!">Hoàn Phí 20-30%++<br>+ Quà Hấp Dẫn!</div>
     <p class="promo-sub" data-vi="Đăng ký thành viên Bộ Tộc Trading ngay hôm nay để nhận ưu đãi độc quyền từ cộng đồng trader hàng đầu Việt Nam." data-en="Join Bộ Tộc Trading today for exclusive perks from Vietnam's top trading community.">Đăng ký thành viên Bộ Tộc Trading ngay hôm nay để nhận ưu đãi độc quyền từ cộng đồng trader hàng đầu Việt Nam.</p>
     <ul class="promo-perks">
-      <li><span class="perk-icon">💰</span><span data-vi="Hoàn phí giao dịch <strong>20-30%++</strong> qua link affiliate đối tác" data-en="<strong>20-30%++</strong> trading fee rebate via partner affiliate link">Hoàn phí giao dịch <strong>20-30%++</strong> qua link affiliate đối tác</span></li>
+      <li><span class="perk-icon"><img src="icon_moneybag.svg" class="idx-perk-svg" alt=""></span><span data-vi="Hoàn phí giao dịch <strong>20-30%++</strong> qua link affiliate đối tác" data-en="<strong>20-30%++</strong> trading fee rebate via partner affiliate link">Hoàn phí giao dịch <strong>20-30%++</strong> qua link affiliate đối tác</span></li>
       <li><span class="perk-icon">🎁</span><span data-vi="Phần quà độc quyền dành riêng cho thành viên mới" data-en="Exclusive gifts for new members">Phần quà độc quyền dành riêng cho thành viên mới</span></li>
-      <li><span class="perk-icon">📊</span><span data-vi="Truy cập tín hiệu giao dịch & tài liệu nội bộ" data-en="Access trading signals & internal documents">Truy cập tín hiệu giao dịch &amp; tài liệu nội bộ</span></li>
+      <li><span class="perk-icon"><img src="icon_chart.svg" class="idx-perk-svg" alt=""></span><span data-vi="Truy cập tín hiệu giao dịch & tài liệu nội bộ" data-en="Access trading signals & internal documents">Truy cập tín hiệu giao dịch &amp; tài liệu nội bộ</span></li>
       <li><span class="perk-icon">🤝</span><span data-vi="Kết nối cộng đồng 500+ trader chuyên nghiệp" data-en="Connect with 500+ professional traders">Kết nối cộng đồng 500+ trader chuyên nghiệp</span></li>
     </ul>
     <button class="promo-cta" onclick="closePromoPopup();openRegisterModal();" data-vi="🚀 Đăng Ký Ngay — Miễn Phí" data-en="🚀 Join Now — Free">🚀 Đăng Ký Ngay — Miễn Phí</button>
@@ -2040,61 +2178,4 @@ section.hero {
         <input type="password" id="sp-pass" placeholder="Tối thiểu 6 ký tự"
           style="width:100%;padding:.7rem 2.6rem .7rem 1rem;background:rgba(255,255,255,0.05);border:1px solid rgba(139,92,246,0.3);border-radius:10px;color:#e2d9f3;font-size:.9rem;box-sizing:border-box;outline:none"
           onfocus="this.style.borderColor='rgba(52,211,153,.7)'" onblur="this.style.borderColor='rgba(139,92,246,.3)'">
-        <button type="button" onclick="togglePasswordVisibility('sp-pass', this)" aria-label="Hiện mật khẩu"
-          style="position:absolute;right:.3rem;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;padding:.45rem .55rem;color:#9d8ec7;font-size:1.05rem;line-height:1;border-radius:6px">👁</button>
-      </div>
-    </div>
-    <div style="margin-bottom:1rem">
-      <label style="font-size:.75rem;color:#9d8ec7;display:block;margin-bottom:.3rem;text-transform:uppercase;letter-spacing:.4px">Xác Nhận Mật Khẩu</label>
-      <div style="position:relative">
-        <input type="password" id="sp-confirm" placeholder="Nhập lại mật khẩu"
-          style="width:100%;padding:.7rem 2.6rem .7rem 1rem;background:rgba(255,255,255,0.05);border:1px solid rgba(139,92,246,0.3);border-radius:10px;color:#e2d9f3;font-size:.9rem;box-sizing:border-box;outline:none"
-          onfocus="this.style.borderColor='rgba(52,211,153,.7)'" onblur="this.style.borderColor='rgba(139,92,246,.3)'"
-          onkeydown="if(event.key==='Enter') doSetPassword()">
-        <button type="button" onclick="togglePasswordVisibility('sp-confirm', this)" aria-label="Hiện mật khẩu"
-          style="position:absolute;right:.3rem;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;padding:.45rem .55rem;color:#9d8ec7;font-size:1.05rem;line-height:1;border-radius:6px">👁</button>
-      </div>
-    </div>
-    <div id="sp-error" style="color:#f87171;font-size:.82rem;margin-bottom:.75rem;padding:.5rem .75rem;background:rgba(248,113,113,0.08);border-radius:8px;border:1px solid rgba(248,113,113,0.2);display:none"></div>
-    <button id="sp-btn" onclick="doSetPassword()"
-      style="width:100%;padding:.8rem;border:none;border-radius:10px;background:linear-gradient(135deg,#34d399,#059669);color:#fff;font-size:.95rem;font-weight:700;cursor:pointer">
-      ✓ Xác Nhận & Đăng Nhập
-    </button>
-  </div>
-
-  <!-- FORGOT PASSWORD PANEL -->
-  <div id="forgot-password-panel" style="background:#0d0920;border:1px solid rgba(167,139,250,0.4);border-radius:18px;padding:2rem;width:100%;max-width:380px;box-shadow:0 0 60px rgba(139,92,246,0.2);display:none;position:relative">
-    <button onclick="closeMemberLogin()" style="position:absolute;top:.9rem;right:.9rem;background:none;border:none;color:#6b5e8a;font-size:1.2rem;cursor:pointer;line-height:1">✕</button>
-    <div style="text-align:center;margin-bottom:1.5rem">
-      <div style="font-size:2rem;margin-bottom:.4rem">🔑</div>
-      <h3 style="font-size:1.1rem;color:#e2d9f3;margin:0 0 .3rem" data-vi="Quên Mật Khẩu" data-en="Forgot Password">Quên Mật Khẩu</h3>
-      <p style="font-size:.8rem;color:#6b5e8a;margin:0" data-vi="Nhập email để nhận link đặt lại" data-en="Enter your email to receive a reset link">Nhập email để nhận link đặt lại</p>
-    </div>
-    <div style="margin-bottom:1rem">
-      <label style="font-size:.75rem;color:#9d8ec7;display:block;margin-bottom:.3rem;text-transform:uppercase;letter-spacing:.4px">Email</label>
-      <input type="email" id="fp-email" placeholder="email@example.com"
-        style="width:100%;padding:.7rem 1rem;background:rgba(255,255,255,0.05);border:1px solid rgba(139,92,246,0.3);border-radius:10px;color:#e2d9f3;font-size:.9rem;box-sizing:border-box;outline:none;transition:border-color .2s"
-        onfocus="this.style.borderColor='rgba(139,92,246,.7)'" onblur="this.style.borderColor='rgba(139,92,246,.3)'"
-        onkeydown="if(event.key==='Enter') doForgotPassword()">
-    </div>
-    <div id="fp-error" style="color:#f87171;font-size:.82rem;margin-bottom:.75rem;padding:.5rem .75rem;background:rgba(248,113,113,0.08);border-radius:8px;border:1px solid rgba(248,113,113,0.2);display:none"></div>
-    <button id="fp-btn" onclick="doForgotPassword()"
-      style="width:100%;padding:.8rem;border:none;border-radius:10px;background:linear-gradient(135deg,#8b5cf6,#6d28d9);color:#fff;font-size:.95rem;font-weight:700;cursor:pointer;margin-bottom:.7rem"
-      data-vi="Gửi Link Đặt Lại" data-en="Send Reset Link">Gửi Link Đặt Lại</button>
-    <a href="#" onclick="backToLoginFromForgot();return false;" style="display:block;text-align:center;font-size:.8rem;color:#9d8ec7;text-decoration:none" data-vi="← Quay lại đăng nhập" data-en="← Back to login">← Quay lại đăng nhập</a>
-  </div>
-
-  <!-- FORGOT PASSWORD SENT PANEL -->
-  <div id="forgot-sent-panel" style="background:#0d0920;border:1px solid rgba(52,211,153,0.4);border-radius:18px;padding:2rem;width:100%;max-width:380px;box-shadow:0 0 60px rgba(52,211,153,0.15);display:none;position:relative">
-    <button onclick="closeMemberLogin()" style="position:absolute;top:.9rem;right:.9rem;background:none;border:none;color:#6b5e8a;font-size:1.2rem;cursor:pointer;line-height:1">✕</button>
-    <div style="text-align:center">
-      <div style="font-size:3rem;margin-bottom:.6rem">📬</div>
-      <h3 style="font-size:1.15rem;color:#34d399;margin:0 0 .8rem" data-vi="Đã Gửi Email!" data-en="Email Sent!">Đã Gửi Email!</h3>
-      <p style="font-size:.88rem;color:#c4b5d9;margin:0 0 .5rem;line-height:1.55" data-vi="Vui lòng kiểm tra hộp thư của bạn:" data-en="Please check your inbox at:">Vui lòng kiểm tra hộp thư của bạn:</p>
-      <p id="fp-sent-email" style="font-size:.92rem;color:#e2d9f3;font-weight:600;margin:0 0 1.2rem;word-break:break-all">—</p>
-      <div style="background:rgba(139,92,246,0.06);border:1px solid rgba(139,92,246,0.2);border-radius:10px;padding:.85rem 1rem;margin-bottom:1rem;text-align:left">
-        <p style="font-size:.78rem;color:#a78bfa;margin:0 0 .3rem;font-weight:600" data-vi="💡 Hướng dẫn:" data-en="💡 Instructions:">💡 Hướng dẫn:</p>
-        <ol style="font-size:.78rem;color:#9d8ec7;margin:0;padding-left:1.1rem;line-height:1.6">
-          <li data-vi="Mở email mới nhất từ Bộ Tộc Trading" data-en="Open the latest email from Bộ Tộc Trading">Mở email mới nhất từ Bộ Tộc Trading</li>
-          <li data-vi="Click vào link trong email (chỉ click 1 lần)" data-en="Click the link in the email (once only)">Click vào link trong email (chỉ click 1 lần)</li>
-          <l
+        <button type="button" onclick="togglePasswordVisibility('sp-pass', this)" aria-label="Hiện mật kh�
