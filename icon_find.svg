@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Layer_10" data-name="Layer 10" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 24 24">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: #fff;
+      }
+
+      .cls-2 {
+        opacity: .4;
+      }
+
+      .cls-3 {
+        fill: url(#linear-gradient);
+      }
+    </style>
+    <linearGradient id="linear-gradient" x1="5.28" y1="5.28" x2="19.42" y2="19.42" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#e0e2fb"/>
+      <stop offset=".25" stop-color="#a8bfe2"/>
+      <stop offset=".5" stop-color="#c6f7cf"/>
+      <stop offset=".75" stop-color="#abefea"/>
+      <stop offset="1" stop-color="#f0f8f7"/>
+    </linearGradient>
+  </defs>
+  <g id="Find">
+    <path class="cls-3" d="M9.5,2c-4.14,0-7.5,3.36-7.5,7.5s3.36,7.5,7.5,7.5,7.5-3.36,7.5-7.5S13.64,2,9.5,2ZM21.61,19.7l-3.81-3.81c-.53-.53-1.38-.53-1.9,0s-.53,1.38,0,1.9l3.81,3.81c.53.53,1.38.53,1.9,0,.53-.53.53-1.38,0-1.9Z"/>
+    <g class="cls-2">
+      <path class="cls-1" d="M9.5,2.2c4.03,0,7.3,3.27,7.3,7.3s-3.27,7.3-7.3,7.3-7.3-3.27-7.3-7.3,3.27-7.3,7.3-7.3M16.85,15.7c.31,0,.59.12.81.34l3.81,3.81c.45.45.45,1.17,0,1.62-.22.22-.5.34-.81.34s-.59-.12-.81-.34l-3.81-3.81c-.45-.45-.45-1.17,0-1.62.22-.22.5-.34.81-.34M9.5,2c-4.14,0-7.5,3.36-7.5,7.5s3.36,7.5,7.5,7.5,7.5-3.36,7.5-7.5-3.36-7.5-7.5-7.5h0ZM16.85,15.5c-.34,0-.69.13-.95.39-.53.53-.53,1.38,0,1.9l3.81,3.81c.26.26.61.39.95.39s.69-.13.95-.39c.53-.53.53-1.38,0-1.9l-3.81-3.81c-.26-.26-.61-.39-.95-.39h0Z"/>
+    </g>
+  </g>
+</svg>

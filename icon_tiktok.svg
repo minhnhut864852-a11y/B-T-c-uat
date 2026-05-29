@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Layer_10" data-name="Layer 10" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 24 24">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: url(#linear-gradient);
+      }
+    </style>
+    <linearGradient id="linear-gradient" x1="6.28" y1="6.28" x2="19.11" y2="19.11" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#e0e2fb"/>
+      <stop offset=".25" stop-color="#a8bfe2"/>
+      <stop offset=".5" stop-color="#c6f7cf"/>
+      <stop offset=".75" stop-color="#abefea"/>
+      <stop offset="1" stop-color="#f0f8f7"/>
+    </linearGradient>
+  </defs>
+  <g id="Tiktok">
+    <path class="cls-1" d="M17,2H7c-2.76,0-5,2.24-5,5v10c0,2.76,2.24,5,5,5h10c2.76,0,5-2.24,5-5V7c0-2.76-2.24-5-5-5ZM20,17c0,1.65-1.35,3-3,3H7c-1.65,0-3-1.35-3-3V7c0-1.65,1.35-3,3-3h10c1.65,0,3,1.35,3,3v10ZM15.12,6.53c-.34-.43-.57-.96-.65-1.53h-1.83v9.58c0,1.07-.87,1.95-1.95,1.95s-1.95-.88-1.95-1.95.87-1.96,1.95-1.96c.19,0,.39.03.57.09v-2.52c-.18-.03-.38-.04-.57-.04-2.45,0-4.42,1.98-4.42,4.42s1.98,4.42,4.42,4.42,4.42-1.99,4.42-4.42v-4.86c.76.54,1.65.89,2.61,1v-2.89c-1.06,0-2.01-.51-2.61-1.29Z"/>
+  </g>
+</svg>
