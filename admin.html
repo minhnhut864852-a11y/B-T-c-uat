@@ -1891,7 +1891,7 @@ async function approveAndInviteMember(regId, email, name, btn) {
     const { error: signUpErr } = await sb.auth.signUp({
       email: email,
       password: crypto.randomUUID(),
-      options: { data: { full_name: name } }
+      options: { data: { full_name: name, needs_password_set: true } }
     });
 
     // Restore admin session IMMEDIATELY, before any other call.
