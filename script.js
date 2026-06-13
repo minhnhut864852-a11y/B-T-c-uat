@@ -1292,7 +1292,7 @@ async function loadPerfFromDB() {
     // Build allTrades format: {d, c, k, l, m, y}
     const dbTrades = data.map(r => {
       const ml = r.month_label || '';
-      const parsed = ml.match(/(\d+)[\\/](\d+)/);
+      const parsed = ml.match(/(\d+)[\s\/\\]+(\d+)/);
       if (!parsed) return null;
       return {
         d: r.trade_date || '',
@@ -1357,7 +1357,7 @@ async function loadPerfSummary() {
     const existingKeys = new Set(allTrades.map(t => `${t.m}-${t.y}`));
     window._summaryOnlyMonths = {};
     data.forEach(s => {
-      const parsed = (s.month_label || '').match(/(\d+)[\/\\](\d+)/);
+      const parsed = (s.month_label || '').match(/(\d+)[\s\/\\]+(\d+)/);
       if (!parsed) return;
       const m = parseInt(parsed[1]), y = parseInt(parsed[2]);
       const key = `${m}-${y}`;
