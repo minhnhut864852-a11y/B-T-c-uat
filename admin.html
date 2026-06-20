@@ -1,0 +1,3479 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — Bộ Tộc Trading</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+/* ── Reset & Base ── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#07030f;
+  --bg2:#0d0920;
+  --bg3:#130e26;
+  --card:#16102e;
+  --card2:#1c1538;
+  --border:rgba(139,92,246,0.18);
+  --purple:#8b5cf6;
+  --purple2:#a78bfa;
+  --gold:#f59e0b;
+  --green:#34d399;
+  --red:#f87171;
+  --blue:#60a5fa;
+  --text:#e2d9f3;
+  --text2:#9d8ec7;
+  --text3:#5a4d7a;
+  --radius:12px;
+  --shadow:0 4px 24px rgba(139,92,246,0.12);
+}
+body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-serif;min-height:100vh;overflow-x:hidden}
+a{text-decoration:none;color:inherit}
+button{cursor:pointer;font-family:inherit}
+input,textarea,select{font-family:inherit}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:var(--bg2)}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+
+/* ══════════════════════════════════
+   LOGIN SCREEN
+══════════════════════════════════ */
+#login-screen{
+  display:flex;align-items:center;justify-content:center;
+  min-height:100vh;background:var(--bg);
+  background-image:radial-gradient(ellipse 80% 60% at 50% -10%,rgba(139,92,246,0.18),transparent);
+}
+.login-box{
+  width:100%;max-width:420px;padding:2.5rem;
+  background:var(--card);border:1px solid var(--border);
+  border-radius:20px;box-shadow:0 0 60px rgba(139,92,246,0.15);
+}
+.login-logo{display:flex;align-items:center;gap:.75rem;margin-bottom:2rem}
+.login-logo .dot{width:38px;height:38px;border-radius:10px;
+  background:linear-gradient(135deg,var(--purple),var(--gold));
+  display:flex;align-items:center;justify-content:center;font-size:1.1rem;font-weight:900;color:#fff}
+.login-logo span{font-size:1.2rem;font-weight:700;letter-spacing:.5px}
+.login-logo span em{color:var(--purple2);font-style:normal}
+.login-title{font-size:1.5rem;font-weight:700;margin-bottom:.4rem}
+.login-sub{color:var(--text2);font-size:.9rem;margin-bottom:2rem}
+.field{margin-bottom:1.2rem}
+.field label{display:block;font-size:.82rem;color:var(--text2);margin-bottom:.45rem;text-transform:uppercase;letter-spacing:.5px}
+.field input{
+  width:100%;padding:.75rem 1rem;
+  background:var(--bg2);border:1px solid var(--border);
+  border-radius:10px;color:var(--text);font-size:.95rem;
+  transition:border-color .2s,box-shadow .2s;outline:none;
+}
+.field input:focus{border-color:var(--purple);box-shadow:0 0 0 3px rgba(139,92,246,0.15)}
+.login-btn{
+  width:100%;padding:.85rem;border:none;border-radius:10px;
+  background:linear-gradient(135deg,var(--purple),#6d28d9);
+  color:#fff;font-size:1rem;font-weight:700;letter-spacing:.3px;
+  transition:opacity .2s,transform .15s;margin-top:.5rem;
+}
+.login-btn:hover{opacity:.9;transform:translateY(-1px)}
+.login-error{
+  color:var(--red);font-size:.85rem;margin-top:.8rem;
+  padding:.6rem 1rem;background:rgba(248,113,113,0.08);
+  border-radius:8px;border:1px solid rgba(248,113,113,0.2);display:none;
+}
+
+/* ══════════════════════════════════
+   APP LAYOUT
+══════════════════════════════════ */
+#app{display:none;min-height:100vh}
+.layout{display:flex;min-height:100vh}
+
+/* ── Sidebar ── */
+.sidebar{
+  width:240px;min-height:100vh;background:var(--bg2);
+  border-right:1px solid var(--border);display:flex;flex-direction:column;
+  position:sticky;top:0;height:100vh;overflow-y:auto;flex-shrink:0;
+}
+.sidebar-logo{padding:1.5rem 1.25rem 1rem;border-bottom:1px solid var(--border)}
+.sidebar-logo .brand{font-size:1rem;font-weight:800;letter-spacing:.3px}
+.sidebar-logo .brand span{color:var(--purple2)}
+.sidebar-logo .role-badge{
+  margin-top:.5rem;display:inline-block;
+  padding:.2rem .6rem;background:rgba(139,92,246,0.15);
+  border:1px solid rgba(139,92,246,0.3);border-radius:20px;
+  font-size:.72rem;color:var(--purple2);font-weight:600;letter-spacing:.4px
+}
+.sidebar-nav{flex:1;padding:1rem 0}
+.nav-section{padding:.3rem 1.25rem .2rem;font-size:.7rem;text-transform:uppercase;
+  letter-spacing:.8px;color:var(--text3);font-weight:600;margin-top:.5rem}
+.nav-item{
+  display:flex;align-items:center;gap:.75rem;
+  padding:.65rem 1.25rem;font-size:.9rem;color:var(--text2);
+  cursor:pointer;transition:background .15s,color .15s;border-radius:0;
+  position:relative;
+}
+.nav-item:hover{background:rgba(139,92,246,0.08);color:var(--text)}
+.nav-item.active{
+  background:rgba(139,92,246,0.15);color:var(--purple2);font-weight:600;
+}
+.nav-item.active::before{
+  content:'';position:absolute;left:0;top:0;bottom:0;width:3px;
+  background:var(--purple);border-radius:0 3px 3px 0;
+}
+.nav-icon{font-size:1rem;width:20px;text-align:center;flex-shrink:0}
+.nav-svg-icon{width:18px;height:18px;vertical-align:middle;flex-shrink:0;display:inline-block}
+.kpi-svg-icon{width:28px;height:28px;display:block}
+.btn-svg-icon{width:14px;height:14px;vertical-align:middle;display:inline-block}
+.img-upload-svg{width:36px;height:36px;display:block;margin:0 auto .2rem}
+.sidebar-bottom{
+  padding:1rem 1.25rem;border-top:1px solid var(--border);
+}
+.logout-btn{
+  width:100%;padding:.6rem;border:1px solid rgba(248,113,113,0.3);
+  border-radius:8px;background:rgba(248,113,113,0.06);
+  color:var(--red);font-size:.85rem;font-weight:600;
+  transition:background .2s;
+}
+.logout-btn:hover{background:rgba(248,113,113,0.12)}
+
+/* ── Main Content ── */
+.main{flex:1;min-width:0;display:flex;flex-direction:column}
+.topbar{
+  padding:1rem 2rem;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  background:var(--bg2);position:sticky;top:0;z-index:10;
+}
+.topbar-title{font-size:1.15rem;font-weight:700}
+.topbar-sub{font-size:.8rem;color:var(--text2)}
+.topbar-right{display:flex;align-items:center;gap:.75rem}
+.topbar-time{font-size:.82rem;color:var(--text2)}
+.avatar{
+  width:36px;height:36px;border-radius:50%;
+  background:linear-gradient(135deg,var(--purple),var(--gold));
+  display:flex;align-items:center;justify-content:center;
+  font-size:.85rem;font-weight:800;color:#fff;
+}
+.content{padding:1.75rem 2rem;flex:1;overflow-y:auto}
+
+/* ══════════════════════════════════
+   PAGES (tabs)
+══════════════════════════════════ */
+.page{display:none}
+.page.active{display:block}
+
+/* ── KPI Cards ── */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:1rem;margin-bottom:1.75rem}
+.kpi-card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:var(--radius);padding:1.25rem 1.5rem;
+  position:relative;overflow:hidden;
+  transition:border-color .2s,transform .2s;
+}
+.kpi-card:hover{border-color:rgba(139,92,246,0.4);transform:translateY(-2px)}
+.kpi-card::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(circle at top right,rgba(139,92,246,0.06),transparent 70%);
+  pointer-events:none;
+}
+.kpi-icon{font-size:1.5rem;margin-bottom:.6rem}
+.kpi-value{font-size:2rem;font-weight:800;line-height:1;margin-bottom:.3rem}
+.kpi-label{font-size:.8rem;color:var(--text2);text-transform:uppercase;letter-spacing:.5px}
+.kpi-card.purple .kpi-value{color:var(--purple2)}
+.kpi-card.gold   .kpi-value{color:var(--gold)}
+.kpi-card.green  .kpi-value{color:var(--green)}
+.kpi-card.blue   .kpi-value{color:var(--blue)}
+
+/* ── Charts Row ── */
+.charts-row{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.75rem}
+@media(max-width:900px){.charts-row{grid-template-columns:1fr}}
+.chart-card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:var(--radius);padding:1.25rem;
+}
+.chart-title{font-size:.9rem;font-weight:700;margin-bottom:1rem;color:var(--text)}
+.chart-wrap{position:relative;height:260px}
+
+/* ── Recent Registrations ── */
+.section-header{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:1rem;
+}
+.section-header h3{font-size:1rem;font-weight:700}
+.table-wrap{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:var(--radius);overflow:hidden;
+}
+table{width:100%;border-collapse:collapse}
+thead tr{background:var(--bg3)}
+th{
+  padding:.75rem 1rem;font-size:.78rem;text-transform:uppercase;
+  letter-spacing:.5px;color:var(--text3);font-weight:600;text-align:left;
+}
+td{padding:.75rem 1rem;font-size:.88rem;border-top:1px solid rgba(139,92,246,0.08)}
+tr:hover td{background:rgba(139,92,246,0.04)}
+.badge{
+  display:inline-block;padding:.2rem .6rem;border-radius:20px;
+  font-size:.72rem;font-weight:700;letter-spacing:.3px;
+}
+.badge-purple{background:rgba(139,92,246,0.15);color:var(--purple2);border:1px solid rgba(139,92,246,0.25)}
+.badge-gold  {background:rgba(245,158,11,0.12);color:var(--gold);border:1px solid rgba(245,158,11,0.25)}
+.badge-green {background:rgba(52,211,153,0.12);color:var(--green);border:1px solid rgba(52,211,153,0.25)}
+.badge-gray  {background:rgba(100,100,140,0.12);color:var(--text2);border:1px solid rgba(100,100,140,0.2)}
+.badge-red   {background:rgba(248,113,113,0.12);color:var(--red);border:1px solid rgba(248,113,113,0.25)}
+
+/* ── Management Pages ── */
+.page-header{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:1.5rem;
+}
+.page-header h2{font-size:1.2rem;font-weight:700}
+.btn-primary{
+  padding:.6rem 1.2rem;border:none;border-radius:8px;
+  background:linear-gradient(135deg,var(--purple),#6d28d9);
+  color:#fff;font-size:.88rem;font-weight:700;
+  transition:opacity .2s,transform .15s;display:flex;align-items:center;gap:.4rem;
+}
+.btn-primary:hover{opacity:.9;transform:translateY(-1px)}
+.btn-secondary{
+  padding:.5rem 1rem;border:1px solid var(--border);border-radius:8px;
+  background:transparent;color:var(--text2);font-size:.82rem;font-weight:600;
+  transition:background .2s,color .2s;
+}
+.btn-secondary:hover{background:rgba(139,92,246,0.1);color:var(--text)}
+.btn-danger{
+  padding:.4rem .8rem;border:1px solid rgba(248,113,113,0.3);border-radius:6px;
+  background:rgba(248,113,113,0.06);color:var(--red);font-size:.78rem;font-weight:600;
+  transition:background .2s;
+}
+.btn-danger:hover{background:rgba(248,113,113,0.15)}
+.btn-publish{
+  padding:.4rem .8rem;border:1px solid rgba(52,211,153,0.3);border-radius:6px;
+  background:rgba(52,211,153,0.06);color:var(--green);font-size:.78rem;font-weight:600;
+  transition:background .2s;
+}
+.btn-publish:hover{background:rgba(52,211,153,0.15)}
+.btn-unpublish{
+  padding:.4rem .8rem;border:1px solid rgba(245,158,11,0.3);border-radius:6px;
+  background:rgba(245,158,11,0.06);color:var(--gold);font-size:.78rem;font-weight:600;
+  transition:background .2s;
+}
+.btn-unpublish:hover{background:rgba(245,158,11,0.15)}
+.btn-edit{
+  padding:.4rem .8rem;border:1px solid rgba(139,92,246,0.3);border-radius:6px;
+  background:rgba(139,92,246,0.06);color:var(--purple2);font-size:.78rem;font-weight:600;
+  transition:background .2s;
+}
+.btn-edit:hover{background:rgba(139,92,246,0.15)}
+
+/* Image upload widget */
+.img-upload-wrap{
+  border:2px dashed var(--border);border-radius:10px;
+  cursor:pointer;transition:border-color .2s,background .2s;
+  overflow:hidden;
+}
+.img-upload-wrap:hover{border-color:var(--purple);background:rgba(139,92,246,0.04)}
+.img-upload-placeholder{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:.4rem;padding:1.5rem;color:var(--text2);font-size:.85rem;text-align:center;
+}
+
+/* Action group */
+.action-group{display:flex;gap:.4rem;flex-wrap:wrap}
+
+/* Scrollable table */
+.table-scroll{overflow-x:auto}
+
+/* ── Modal / Form Drawer ── */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.7);
+  display:flex;align-items:flex-start;justify-content:flex-end;
+  z-index:1000;opacity:0;pointer-events:none;transition:opacity .25s;
+}
+.modal-overlay.open{opacity:1;pointer-events:all}
+.modal-drawer{
+  width:520px;max-width:100vw;background:var(--bg2);
+  height:100vh;overflow-y:auto;padding:2rem;
+  border-left:1px solid var(--border);
+  transform:translateX(60px);transition:transform .25s;
+}
+.modal-overlay.open .modal-drawer{transform:translateX(0)}
+.modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem}
+.modal-header h3{font-size:1.1rem;font-weight:700}
+.modal-close{
+  width:32px;height:32px;border-radius:8px;border:1px solid var(--border);
+  background:transparent;color:var(--text2);font-size:1rem;
+  display:flex;align-items:center;justify-content:center;
+}
+.modal-close:hover{background:rgba(139,92,246,0.1);color:var(--text)}
+.form-group{margin-bottom:1.1rem}
+.form-group label{display:block;font-size:.8rem;color:var(--text2);margin-bottom:.4rem;text-transform:uppercase;letter-spacing:.4px}
+.form-group input,
+.form-group textarea,
+.form-group select{
+  width:100%;padding:.7rem .9rem;
+  background:var(--card);border:1px solid var(--border);
+  border-radius:8px;color:var(--text);font-size:.9rem;
+  transition:border-color .2s,box-shadow .2s;outline:none;resize:vertical;
+}
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus{
+  border-color:var(--purple);box-shadow:0 0 0 3px rgba(139,92,246,0.12)
+}
+.form-group select option{background:var(--bg2)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:.75rem}
+.form-actions{display:flex;gap:.75rem;margin-top:1.5rem}
+.form-actions .btn-primary{flex:1;justify-content:center;padding:.8rem}
+.toast{
+  position:fixed;bottom:2rem;right:2rem;
+  padding:.75rem 1.25rem;border-radius:10px;
+  font-size:.88rem;font-weight:600;z-index:2000;
+  transform:translateY(20px);opacity:0;transition:all .3s;pointer-events:none;
+}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.success{background:#065f46;border:1px solid var(--green);color:var(--green)}
+.toast.error  {background:#7f1d1d;border:1px solid var(--red);color:var(--red)}
+
+/* ── Stat Table ── */
+.stat-table{width:100%;border-collapse:collapse}
+.stat-table td{padding:.5rem .75rem;font-size:.85rem;border-bottom:1px solid rgba(139,92,246,0.06)}
+.stat-table td:first-child{color:var(--text2)}
+.stat-table td:last-child{font-weight:700;text-align:right}
+.stat-bar{
+  height:6px;border-radius:3px;background:var(--border);
+  overflow:hidden;margin-top:.2rem;
+}
+.stat-bar-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--purple),var(--purple2));transition:width .5s ease}
+
+/* ── Loading spinner ── */
+.spinner{
+  width:32px;height:32px;border:3px solid var(--border);
+  border-top-color:var(--purple);border-radius:50%;
+  animation:spin .7s linear infinite;margin:2rem auto;display:block;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── Empty state ── */
+.empty{text-align:center;padding:3rem 1rem;color:var(--text2)}
+.empty .icon{font-size:2.5rem;margin-bottom:.75rem}
+.empty p{font-size:.9rem}
+
+/* ── Responsive ── */
+/* ─── Hamburger button (mobile only) ─── */
+.hamburger-btn{
+  display:none;
+  background:none;border:none;cursor:pointer;
+  padding:.4rem;
+  flex-direction:column;gap:5px;
+  margin-right:.5rem;
+  border-radius:6px;
+  transition:background .15s;
+}
+.hamburger-btn:hover{ background:rgba(139,92,246,0.08); }
+.hamburger-btn span{
+  display:block;width:22px;height:2px;
+  background:var(--text);
+  border-radius:2px;
+  transition:transform .25s,opacity .2s;
+}
+.hamburger-btn.open span:nth-child(1){ transform:translateY(7px) rotate(45deg); }
+.hamburger-btn.open span:nth-child(2){ opacity:0; }
+.hamburger-btn.open span:nth-child(3){ transform:translateY(-7px) rotate(-45deg); }
+
+/* ─── Mobile sidebar backdrop ─── */
+.sidebar-backdrop{
+  display:none;
+  position:fixed;inset:0;
+  background:rgba(0,0,0,0.5);
+  backdrop-filter:blur(4px);
+  z-index:90;
+  opacity:0;
+  transition:opacity .25s;
+}
+.sidebar-backdrop.open{ display:block;opacity:1; }
+
+@media(max-width:768px){
+  .sidebar{width:200px}
+  .content{padding:1.25rem}
+  .topbar{padding:.75rem 1.25rem}
+  .kpi-grid{grid-template-columns:repeat(2,1fr)}
+  .charts-row{grid-template-columns:1fr}
+  .modal-drawer{width:100vw}
+}
+
+@media(max-width:600px){
+  /* Sidebar slides in from left */
+  .sidebar{
+    display:flex;
+    position:fixed;
+    top:0;left:0;
+    width:260px;height:100vh;
+    z-index:100;
+    transform:translateX(-100%);
+    transition:transform .28s ease;
+    box-shadow:0 0 40px rgba(0,0,0,0.5);
+  }
+  .sidebar.open{ transform:translateX(0); }
+  /* Hamburger visible on mobile */
+  .hamburger-btn{ display:flex; }
+  .layout{ display:block; }
+  .main{ width:100%; }
+  .topbar{
+    position:sticky;top:0;
+    z-index:50;
+    background:var(--bg);
+  }
+  .kpi-grid{grid-template-columns:1fr 1fr}
+  .topbar-time{ display:none; }
+  #admin-email{ display:none; }
+  .topbar-title{ font-size:1.05rem; }
+  .topbar-sub{ font-size:.72rem; }
+  /* Modal drawer full screen on mobile */
+  .modal-drawer{
+    width:100vw;
+    max-width:100vw;
+    height:100vh;
+    max-height:100vh;
+    border-radius:0;
+  }
+  .modal-overlay{ padding:0; }
+  /* Tables get horizontal scroll */
+  .table-wrap{ overflow-x:auto; -webkit-overflow-scrolling:touch; }
+  table{ min-width:640px; }
+  /* Page header stack */
+  .page-header{ flex-direction:column; align-items:stretch; gap:.6rem; }
+  .page-header .btn-primary{ width:100%; }
+  /* Form rows stack */
+  .form-row{ grid-template-columns:1fr; }
+  /* Inline-styled grids in admin forms also stack on mobile */
+  #macro-add-form > div[style*="grid-template-columns"],
+  #macro-import-form > div[style*="grid-template-columns"],
+  #macro-import-form div[style*="grid-template-columns"],
+  .modal-drawer div[style*="grid-template-columns"] {
+    grid-template-columns: 1fr !important;
+  }
+  /* Macro form: ensure full width fields, comfortable spacing */
+  #macro-add-form input,
+  #macro-add-form select,
+  #macro-add-form textarea {
+    font-size: 16px !important; /* prevents iOS Safari auto-zoom */
+  }
+  /* Section nav tabs (e.g. macro week/month) wrap nicely */
+  .macro-month-tabs, #macro-month-tabs { flex-wrap: wrap; gap: .4rem; }
+}
+</style>
+</head>
+<body>
+
+<!-- UAT Environment Banner — only visible on uat.botoc.trading -->
+<script>
+  var h = window.location.hostname;
+  if (h === 'uat.botoc.trading' || h.endsWith('github.io')) {
+    document.addEventListener('DOMContentLoaded', function() {
+      var b = document.createElement('div');
+      b.id = 'uat-banner';
+      b.innerHTML = '🧪 <strong>UAT Environment</strong> — Đây là môi trường test, không phải production';
+      b.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:#dc2626;color:#fff;text-align:center;padding:.45rem 1rem;font-size:.82rem;letter-spacing:.3px;';
+      document.body.prepend(b);
+      document.body.style.paddingTop = '34px';
+    });
+  }
+</script>
+
+<!-- ════════════════════════════════
+     LOGIN SCREEN
+════════════════════════════════ -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">
+      <div class="dot">B</div>
+      <span>Bo<em>Toc</em> Admin</span>
+    </div>
+    <h1 class="login-title">Đăng nhập</h1>
+    <p class="login-sub">Chỉ dành cho quản trị viên Bộ Tộc Trading</p>
+    <div class="field">
+      <label>Email</label>
+      <input type="email" id="inp-user" placeholder="admin@botoctrading.com" autocomplete="email">
+    </div>
+    <div class="field">
+      <label>Mật khẩu</label>
+      <input type="password" id="inp-pass" placeholder="••••••••" autocomplete="current-password">
+    </div>
+    <button class="login-btn" onclick="doLogin()">Đăng Nhập →</button>
+    <div class="login-error" id="login-error">Sai tên đăng nhập hoặc mật khẩu.</div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════
+     ADMIN APP
+════════════════════════════════ -->
+<div id="app">
+  <div class="layout">
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-logo">
+        <div class="brand">Bo<span>Toc</span> Trading</div>
+        <div class="role-badge">⚡ ADMIN</div>
+      </div>
+      <nav class="sidebar-nav">
+        <div class="nav-section">Tổng Quan</div>
+        <div class="nav-item active" onclick="showPage('dashboard',this)">
+          <span class="nav-icon"><img src="icon_chart_1.svg" class="nav-svg-icon" alt=""></span> Dashboard
+        </div>
+        <div class="nav-item" onclick="showPage('members',this)">
+          <span class="nav-icon"><img src="icon_comnunity_1.svg" class="nav-svg-icon" alt=""></span> Thành Viên
+        </div>
+        <div class="nav-section">Nội Dung</div>
+        <div class="nav-item" onclick="showPage('events',this)">
+          <span class="nav-icon"><img src="icon_present.svg" class="nav-svg-icon" alt=""></span> Events
+        </div>
+        <div class="nav-item" onclick="showPage('reviews',this)">
+          <span class="nav-icon"><img src="icon_star.svg" class="nav-svg-icon" alt=""></span> Review
+        </div>
+        <div class="nav-item" onclick="showPage('news',this)">
+          <span class="nav-icon"><img src="icon_note.svg" class="nav-svg-icon" alt=""></span> Tin Tức
+        </div>
+        <div class="nav-item" onclick="showPage('daily-news',this)">
+          <span class="nav-icon"><img src="icon_light.svg" class="nav-svg-icon" alt=""></span> Tin Hằng Ngày
+        </div>
+        <div class="nav-section">Cộng Đồng</div>
+        <div class="nav-item" onclick="showPage('knowledge',this)">
+          <span class="nav-icon"><img src="icon_knowledge.svg" style="width:18px;height:18px;vertical-align:middle" alt=""></span> Kiến Thức Crypto
+        </div>
+        <div class="nav-item" onclick="showPage('comments',this)">
+          <span class="nav-icon"><img src="icon_comment.svg" class="nav-svg-icon" alt=""></span> Bình Luận
+        </div>
+        <div class="nav-item" onclick="showPage('macro',this)">
+          <span class="nav-icon"><img src="icon_flash.svg" class="nav-svg-icon" alt=""></span> Lịch Vĩ Mô
+        </div>
+        <div class="nav-item" onclick="showPage('performance',this)">
+          <span class="nav-icon"><img src="icon_efficiency.svg" class="nav-svg-icon" alt=""></span> Hiệu Suất
+        </div>
+        <div class="nav-section">Tài Khoản</div>
+        <div class="nav-item" onclick="showPage('settings',this)">
+          <span class="nav-icon"><img src="icon_setting.svg" class="nav-svg-icon" alt=""></span> Cài Đặt
+        </div>
+      </nav>
+      <div class="sidebar-bottom">
+        <button class="logout-btn" onclick="doLogout()">🚪 Đăng Xuất</button>
+      </div>
+    </aside>
+
+    <!-- Mobile sidebar backdrop -->
+    <div id="sidebar-backdrop" class="sidebar-backdrop" onclick="closeMobileSidebar()"></div>
+
+    <!-- Main -->
+    <div class="main">
+      <div class="topbar">
+        <button class="hamburger-btn" id="hamburger-btn" onclick="toggleMobileSidebar()" aria-label="Mở menu">
+          <span></span><span></span><span></span>
+        </button>
+        <div style="flex:1;min-width:0">
+          <div class="topbar-title" id="page-title">Dashboard</div>
+          <div class="topbar-sub" id="page-sub">Tổng quan hoạt động cộng đồng</div>
+        </div>
+        <div class="topbar-right">
+          <span class="topbar-time" id="clock"></span>
+          <span style="font-size:.8rem;color:var(--text2)" id="admin-email"></span>
+          <div class="avatar" id="avatar-letter">A</div>
+        </div>
+      </div>
+
+      <div class="content">
+
+        <!-- ── DASHBOARD PAGE ── -->
+        <div class="page active" id="page-dashboard">
+          <div style="display:flex;justify-content:flex-end;margin-bottom:.75rem">
+            <button class="btn-secondary" onclick="loadDashboard()">🔄 Làm mới</button>
+          </div>
+          <div class="kpi-grid" id="kpi-grid">
+            <div class="kpi-card purple">
+              <div class="kpi-icon"><img src="icon_comnunity_1.svg" class="kpi-svg-icon" alt=""></div>
+              <div class="kpi-value" id="kpi-total">—</div>
+              <div class="kpi-label">Tổng thành viên</div>
+            </div>
+            <div class="kpi-card gold">
+              <div class="kpi-icon"><img src="icon_present.svg" class="kpi-svg-icon" alt=""></div>
+              <div class="kpi-value" id="kpi-events">—</div>
+              <div class="kpi-label">Events đang chạy</div>
+            </div>
+            <div class="kpi-card green">
+              <div class="kpi-icon"><img src="icon_note.svg" class="kpi-svg-icon" alt=""></div>
+              <div class="kpi-value" id="kpi-news">—</div>
+              <div class="kpi-label">Bài đã đăng</div>
+            </div>
+            <div class="kpi-card blue">
+              <div class="kpi-icon"><img src="icon_location.svg" class="kpi-svg-icon" alt=""></div>
+              <div class="kpi-value" id="kpi-provinces">—</div>
+              <div class="kpi-label">Tỉnh / Thành Phố</div>
+            </div>
+          </div>
+
+          <div class="charts-row">
+            <!-- Province chart -->
+            <div class="chart-card">
+              <div class="chart-title"><img src="icon_location.svg" class="nav-svg-icon" style="width:24px;height:24px" alt=""> Phân bổ theo Tỉnh / Thành Phố</div>
+              <div class="chart-wrap"><canvas id="chart-province"></canvas></div>
+            </div>
+            <!-- Capital chart -->
+            <div class="chart-card">
+              <div class="chart-title"><img src="icon_moneybag.svg" class="nav-svg-icon" style="width:24px;height:24px" alt=""> Phân bổ theo Số Vốn</div>
+              <div class="chart-wrap"><canvas id="chart-capital"></canvas></div>
+            </div>
+          </div>
+
+          <!-- Recent registrations -->
+          <div class="section-header">
+            <h3><img src="icon_personal.svg" class="nav-svg-icon" style="width:20px;height:20px;margin-right:4px" alt=""> Đăng ký gần đây</h3>
+          </div>
+          <div class="table-wrap table-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Họ Tên</th>
+                  <th>Email</th>
+                  <th>Zalo</th>
+                  <th>Tỉnh / Thành</th>
+                  <th>Vốn</th>
+                  <th>Ngày ĐK</th>
+                  <th>Thao Tác</th>
+                </tr>
+              </thead>
+              <tbody id="recent-tbody">
+                <tr><td colspan="8" style="text-align:center;padding:2rem"><span class="spinner"></span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ── MEMBERS PAGE ── -->
+        <div class="page" id="page-members">
+          <div class="page-header">
+            <h2><img src="icon_comnunity_1.svg" class="nav-svg-icon" alt=""> Danh Sách Thành Viên</h2>
+            <button class="btn-secondary" onclick="loadMembers()">🔄 Làm mới</button>
+          </div>
+
+          <!-- Filter bar -->
+          <div style="display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;margin-bottom:1rem;padding:.9rem 1rem;background:rgba(139,92,246,0.05);border:1px solid rgba(139,92,246,0.15);border-radius:12px">
+            <div style="display:flex;align-items:center;gap:.4rem">
+              <span style="font-size:.75rem;color:var(--text2);white-space:nowrap">Trạng thái:</span>
+              <select id="mf-status" onchange="applyMemberFilters()" style="background:#1a0e35;border:1px solid rgba(139,92,246,0.3);color:var(--text);border-radius:7px;padding:.3rem .6rem;font-size:.8rem">
+                <option value="">Tất cả</option>
+                <option value="pending">⏳ Chờ duyệt</option>
+                <option value="approved">✓ Đã duyệt</option>
+                <option value="inactive">✗ Vô hiệu</option>
+              </select>
+            </div>
+            <div style="display:flex;align-items:center;gap:.4rem">
+              <span style="font-size:.75rem;color:var(--text2);white-space:nowrap">Từ ngày:</span>
+              <input type="date" id="mf-date-from" onchange="applyMemberFilters()" style="background:#1a0e35;border:1px solid rgba(139,92,246,0.3);color:var(--text);border-radius:7px;padding:.3rem .6rem;font-size:.8rem">
+            </div>
+            <div style="display:flex;align-items:center;gap:.4rem">
+              <span style="font-size:.75rem;color:var(--text2);white-space:nowrap">Đến ngày:</span>
+              <input type="date" id="mf-date-to" onchange="applyMemberFilters()" style="background:#1a0e35;border:1px solid rgba(139,92,246,0.3);color:var(--text);border-radius:7px;padding:.3rem .6rem;font-size:.8rem">
+            </div>
+            <div style="display:flex;align-items:center;gap:.4rem">
+              <span style="font-size:.75rem;color:var(--text2);white-space:nowrap">Vốn:</span>
+              <select id="mf-capital" onchange="applyMemberFilters()" style="background:#1a0e35;border:1px solid rgba(139,92,246,0.3);color:var(--text);border-radius:7px;padding:.3rem .6rem;font-size:.8rem">
+                <option value="">Tất cả</option>
+              </select>
+            </div>
+            <div style="display:flex;align-items:center;gap:.4rem">
+              <span style="font-size:.75rem;color:var(--text2);white-space:nowrap">Mục tiêu:</span>
+              <select id="mf-goal" onchange="applyMemberFilters()" style="background:#1a0e35;border:1px solid rgba(139,92,246,0.3);color:var(--text);border-radius:7px;padding:.3rem .6rem;font-size:.8rem">
+                <option value="">Tất cả</option>
+              </select>
+            </div>
+            <div style="display:flex;align-items:center;gap:.4rem">
+              <span style="font-size:.75rem;color:var(--text2);white-space:nowrap">Tỉnh thành:</span>
+              <select id="mf-province" onchange="applyMemberFilters()" style="background:#1a0e35;border:1px solid rgba(139,92,246,0.3);color:var(--text);border-radius:7px;padding:.3rem .6rem;font-size:.8rem">
+                <option value="">Tất cả</option>
+              </select>
+            </div>
+            <div style="display:flex;align-items:center;gap:.4rem">
+              <span style="font-size:.75rem;color:var(--text2);white-space:nowrap">Họ tên:</span>
+              <input type="text" id="mf-name" oninput="applyMemberFilters()" placeholder="Tìm tên..." style="background:#1a0e35;border:1px solid rgba(139,92,246,0.3);color:var(--text);border-radius:7px;padding:.3rem .6rem;font-size:.8rem;width:130px">
+            </div>
+            <div style="display:flex;align-items:center;gap:.4rem">
+              <span style="font-size:.75rem;color:var(--text2);white-space:nowrap">UID:</span>
+              <input type="text" id="mf-uid" oninput="applyMemberFilters()" placeholder="Tìm UID..." style="background:#1a0e35;border:1px solid rgba(139,92,246,0.3);color:var(--text);border-radius:7px;padding:.3rem .6rem;font-size:.8rem;width:120px">
+            </div>
+            <button onclick="resetMemberFilters()" style="margin-left:auto;background:none;border:1px solid rgba(139,92,246,0.25);color:var(--text2);border-radius:7px;padding:.3rem .7rem;font-size:.78rem;cursor:pointer">✕ Xóa bộ lọc</button>
+            <span id="mf-count" style="font-size:.78rem;color:var(--text3)"></span>
+          </div>
+
+          <div class="table-wrap table-scroll">
+            <table style="table-layout:fixed;width:100%">
+              <colgroup>
+                <col style="width:36px">
+                <col style="width:160px">
+                <col style="width:200px">
+                <col style="width:100px">
+                <col style="width:80px">
+                <col style="width:140px">
+                <col style="width:90px">
+                <col style="width:100px">
+                <col>
+              </colgroup>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Họ Tên</th>
+                  <th>Email</th>
+                  <th>Zalo</th>
+                  <th>Vốn</th>
+                  <th>Mục Tiêu</th>
+                  <th>Ngày ĐK</th>
+                  <th>Trạng Thái</th>
+                  <th>Thao Tác</th>
+                </tr>
+              </thead>
+              <tbody id="members-tbody">
+                <tr><td colspan="9" style="text-align:center;padding:2rem"><span class="spinner"></span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ── EVENTS PAGE ── -->
+        <div class="page" id="page-events">
+          <div class="page-header">
+            <h2>📅 Quản Lý Events</h2>
+            <button class="btn-primary" onclick="openEventModal()">
+              ＋ Thêm Event
+            </button>
+          </div>
+          <div class="table-wrap table-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>Tiêu Đề</th>
+                  <th>Loại</th>
+                  <th>Ngày</th>
+                  <th>Địa Điểm</th>
+                  <th>Trạng Thái</th>
+                  <th>Thao Tác</th>
+                </tr>
+              </thead>
+              <tbody id="events-tbody">
+                <tr><td colspan="6" style="text-align:center;padding:2rem"><span class="spinner"></span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ── REVIEWS PAGE ── -->
+        <div class="page" id="page-reviews">
+          <div class="page-header">
+            <h2>⭐ Quản Lý Review</h2>
+            <button class="btn-primary" onclick="openReviewModal()">
+              ＋ Thêm Review
+            </button>
+          </div>
+          <p style="color:var(--text2);font-size:.85rem;margin-bottom:1rem">
+            Upload ảnh chụp tin nhắn đánh giá của thành viên. Recommend kích thước ảnh dọc (portrait) — tỷ lệ 9:16.
+          </p>
+          <div id="reviews-grid-admin" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:1rem">
+            <div style="grid-column:1/-1;text-align:center;padding:2rem"><span class="spinner"></span></div>
+          </div>
+        </div>
+
+        <!-- ── NEWS PAGE ── -->
+        <div class="page" id="page-news">
+          <div class="page-header">
+            <h2>📰 Quản Lý Tin Tức</h2>
+            <button class="btn-primary" onclick="openNewsModal()">
+              ＋ Thêm Bài Viết
+            </button>
+          </div>
+          <div class="table-wrap table-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>Tiêu Đề</th>
+                  <th>Tag</th>
+                  <th>Ngày Đăng</th>
+                  <th>Trạng Thái</th>
+                  <th>Thao Tác</th>
+                </tr>
+              </thead>
+              <tbody id="news-tbody">
+                <tr><td colspan="5" style="text-align:center;padding:2rem"><span class="spinner"></span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+
+        <!-- ── DAILY NEWS PAGE ── -->
+        <div class="page" id="page-daily-news">
+          <div class="page-header">
+            <h2>📅 Tin Tức Hằng Ngày</h2>
+            <button class="btn-primary" onclick="openDailyNewsModal()">
+              ＋ Thêm Tin
+            </button>
+          </div>
+          <div class="table-wrap table-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:60px">Ảnh</th>
+                  <th>Tiêu Đề</th>
+                  <th>Ngày</th>
+                  <th>Trạng Thái</th>
+                  <th>Thao Tác</th>
+                </tr>
+              </thead>
+              <tbody id="dnn-tbody">
+                <tr><td colspan="5" style="text-align:center;padding:2rem"><span class="spinner"></span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ── COMMENTS PAGE ── -->
+        <div class="page" id="page-knowledge">
+          <div class="page-header">
+            <button class="btn-secondary" onclick="loadKnowledgeAdmin()">🔄 Làm mới</button>
+            <button class="btn-primary" onclick="openKtAdminPost()">➕ Thêm bài</button>
+          </div>
+          <div style="display:flex;gap:.5rem;margin-bottom:1.5rem;flex-wrap:wrap">
+            <button id="kta-tab-pending"   class="btn-primary"   onclick="showKtaTab('pending')">⏳ Chờ Duyệt <span id="kta-pending-count"></span></button>
+            <button id="kta-tab-published" class="btn-secondary" onclick="showKtaTab('published')">✅ Đã Duyệt</button>
+            <button id="kta-tab-rejected"  class="btn-secondary" onclick="showKtaTab('rejected')">❌ Từ Chối</button>
+          </div>
+          <div id="kta-list"></div>
+        </div>
+
+        <div class="page" id="page-comments">
+          <div style="max-width:900px">
+            <div class="chart-card">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:.5rem">
+                <h3 style="margin:0;color:#e2d9f3;font-size:1rem"><img src="icon_comment.svg" class="nav-svg-icon" alt=""> Quản Lý Bình Luận</h3>
+                <span id="comments-count" style="font-size:.8rem;color:#6b5e8a"></span>
+              </div>
+              <div id="admin-comments-list"><p style="color:#6b5e8a;font-size:.85rem">Đang tải...</p></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── MACRO EVENTS PAGE ── -->
+        <div class="page" id="page-macro">
+          <div style="max-width:900px">
+            <div class="chart-card">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:.5rem">
+                <h3 style="margin:0;color:#e2d9f3;font-size:1rem">📅 Lịch Sự Kiện Kinh Tế Vĩ Mô</h3>
+                <div style="display:flex;gap:.4rem;flex-wrap:wrap">
+                  <a href="macro_events_template.xlsx" download class="btn-secondary" style="font-size:.8rem;padding:.4rem .9rem;text-decoration:none;display:inline-flex;align-items:center;gap:.3rem">📥 Tải Template</a>
+                  <button class="btn-secondary" onclick="toggleMacroImportForm()" style="font-size:.8rem;padding:.4rem .9rem">📤 Import Excel</button>
+                  <button class="btn-primary" onclick="toggleMacroAddForm()" style="font-size:.8rem;padding:.4rem .9rem">➕ Thêm Thủ Công</button>
+                </div>
+              </div>
+
+              <!-- Excel Import Form -->
+              <div id="macro-import-form" style="display:none;background:rgba(255,255,255,0.03);border-radius:10px;padding:1rem;margin-bottom:1rem">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:.65rem;margin-bottom:.75rem">
+                  <div>
+                    <label style="font-size:.78rem;color:#9d8ec7;display:block;margin-bottom:.25rem">File Excel (.xlsx) *</label>
+                    <input id="macro-file" type="file" accept=".xlsx,.xls"
+                      style="width:100%;padding:.45rem .7rem;background:rgba(255,255,255,0.05);border:1px solid rgba(139,92,246,0.3);border-radius:8px;color:#9d8ec7;font-size:.82rem;box-sizing:border-box">
+                  </div>
+                  <div style="display:flex;align-items:flex-end">
+                    <p style="font-size:.78rem;color:#6b5e8a;line-height:1.6;margin:0">Dùng đúng template đã tải về.<br>Xóa các dòng ví dụ (màu xám) trước khi import.</p>
+                  </div>
+                </div>
+                <div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap">
+                  <button class="btn-primary" onclick="parseMacroExcel()" style="font-size:.82rem;padding:.45rem 1.1rem">🔍 Phân Tích File</button>
+                  <button onclick="toggleMacroImportForm()" style="background:rgba(255,255,255,0.06);border:none;border-radius:8px;color:#9d8ec7;padding:.45rem 1rem;cursor:pointer;font-size:.82rem">Đóng</button>
+                </div>
+                <!-- Preview -->
+                <div id="macro-preview" style="display:none;margin-top:.75rem">
+                  <p id="macro-preview-info" style="font-size:.82rem;color:#a78bfa;margin-bottom:.6rem"></p>
+                  <div style="max-height:220px;overflow-y:auto;border-radius:8px;border:1px solid rgba(139,92,246,0.2)">
+                    <table style="width:100%;border-collapse:collapse;font-size:.78rem">
+                      <thead><tr id="macro-preview-head" style="background:rgba(139,92,246,0.12)"></tr></thead>
+                      <tbody id="macro-preview-body"></tbody>
+                    </table>
+                  </div>
+                  <div style="display:flex;gap:.5rem;margin-top:.65rem">
+                    <button class="btn-primary" id="macro-confirm-btn" onclick="confirmMacroImport()" style="font-size:.82rem;padding:.5rem 1.2rem"><img src="icon_save.svg" class="btn-svg-icon" alt=""> Xác Nhận Import</button>
+                    <button onclick="cancelMacroImport()" style="background:rgba(255,255,255,0.06);border:none;border-radius:8px;color:#9d8ec7;padding:.45rem 1rem;cursor:pointer;font-size:.82rem">Huỷ</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Add / Edit Event Form -->
+              <div id="macro-add-form" style="display:none;background:rgba(255,255,255,0.03);border-radius:10px;padding:1rem;margin-bottom:1rem">
+                <input type="hidden" id="me-id">
+                <h4 id="me-form-title" style="margin:0 0 .8rem;color:#e2d9f3;font-size:.95rem">Thêm Sự Kiện Mới</h4>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:.65rem;margin-bottom:.65rem">
+                  <div>
+                    <label style="font-size:.78rem;color:#9d8ec7;display:block;margin-bottom:.25rem">Tên sự kiện *</label>
+                    <input id="me-name" type="text" placeholder="VD: Fed Interest Rate Decision" style="width:100%;padding:.5rem .7rem;background:rgba(255,255,255,0.05);border:1px solid rgba(139,92,246,0.3);border-radius:8px;color:#e2d9f3;font-size:.83rem;box-sizing:border-box">
+                  </div>
+                  <div>
+                    <label style="font-size:.78rem;color:#9d8ec7;display:block;margin-bottom:.25rem">Ngày & Giờ *</label>
+                    <input id="me-date" type="datetime-local" style="width:100%;padding:.5rem .7rem;background:rgba(255,255,255,0.05);border:1px solid rgba(139,92,246,0.3);border-radius:8px;color:#e2d9f3;font-size:.83rem;box-sizing:border-box">
+                  </div>
+                  <div>
+                    <label style="font-size:.78rem;color:#9d8ec7;display:block;margin-bottom:.25rem">Mức độ ảnh hưởng *</label>
+                    <select id="me-impact" style="width:100%;padding:.5rem .7rem;background:#1a1f2e;border:1px solid rgba(139,92,246,0.3);border-radius:8px;color:#e2d9f3;font-size:.83rem;box-sizing:border-box">
+                      <option value="High">🔴 High</option>
+                      <option value="Medium" selected>🟡 Medium</option>
+                      <option value="Low">🟢 Low</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label style="font-size:.78rem;color:#9d8ec7;display:block;margin-bottom:.25rem">Forecast</label>
+                    <input id="me-forecast" type="text" placeholder="VD: 5.25%" style="width:100%;padding:.5rem .7rem;background:rgba(255,255,255,0.05);border:1px solid rgba(139,92,246,0.3);border-radius:8px;color:#e2d9f3;font-size:.83rem;box-sizing:border-box">
+                  </div>
+                  <div>
+                    <label style="font-size:.78rem;color:#9d8ec7;display:block;margin-bottom:.25rem">Actual (sau khi đã ra)</label>
+                    <input id="me-actual" type="text" placeholder="VD: 5.30%" style="width:100%;padding:.5rem .7rem;background:rgba(255,255,255,0.05);border:1px solid rgba(139,92,246,0.3);border-radius:8px;color:#e2d9f3;font-size:.83rem;box-sizing:border-box">
+                  </div>
+                  <div>
+                    <label style="font-size:.78rem;color:#9d8ec7;display:block;margin-bottom:.25rem">Previous</label>
+                    <input id="me-previous" type="text" placeholder="VD: 5.50%" style="width:100%;padding:.5rem .7rem;background:rgba(255,255,255,0.05);border:1px solid rgba(139,92,246,0.3);border-radius:8px;color:#e2d9f3;font-size:.83rem;box-sizing:border-box">
+                  </div>
+                  <div style="grid-column:1/-1">
+                    <label style="font-size:.78rem;color:#9d8ec7;display:block;margin-bottom:.25rem">Link bài viết (nếu đã qua)</label>
+                    <input id="me-url" type="text" placeholder="https://..." style="width:100%;padding:.5rem .7rem;background:rgba(255,255,255,0.05);border:1px solid rgba(139,92,246,0.3);border-radius:8px;color:#e2d9f3;font-size:.83rem;box-sizing:border-box">
+                  </div>
+                </div>
+                <div style="display:flex;gap:.5rem">
+                  <button class="btn-primary" id="me-save-btn" onclick="addMacroEventManual()" style="font-size:.82rem;padding:.45rem 1.1rem"><img src="icon_save.svg" class="btn-svg-icon" alt=""> Lưu Sự Kiện</button>
+                  <button onclick="cancelMacroEdit()" style="background:rgba(255,255,255,0.06);border:none;border-radius:8px;color:#9d8ec7;padding:.45rem 1rem;cursor:pointer;font-size:.82rem">Huỷ</button>
+                </div>
+                <p id="me-status" style="font-size:.78rem;margin:.5rem 0 0;color:#34d399;display:none"></p>
+              </div>
+
+              <div id="admin-macro-list"><p style="color:#6b5e8a;font-size:.85rem">Đang tải...</p></div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- ── PERFORMANCE PAGE ── -->
+        <div class="page" id="page-performance">
+          <div style="max-width:960px">
+
+            <!-- Import card -->
+            <div class="chart-card" style="margin-bottom:1.25rem">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:.5rem">
+                <h3 style="margin:0;color:#e2d9f3;font-size:1rem">📥 Import Dữ Liệu Từ Excel</h3>
+                <button class="btn-primary" onclick="togglePerfImportForm()" style="font-size:.8rem;padding:.4rem .9rem">➕ Import Excel</button>
+              </div>
+
+              <!-- Import form -->
+              <div id="perf-import-form" style="display:none;background:rgba(255,255,255,0.03);border-radius:10px;padding:1rem;margin-bottom:1rem">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:.65rem;margin-bottom:.75rem">
+                  <!-- Label field (single-sheet mode) -->
+                  <div id="perf-label-wrap">
+                    <label style="font-size:.78rem;color:#9d8ec7;display:block;margin-bottom:.25rem">Nhãn tháng *</label>
+                    <input id="perf-label" type="text" placeholder="VD: tháng 04/2026"
+                      style="width:100%;padding:.5rem .7rem;background:rgba(255,255,255,0.05);border:1px solid rgba(139,92,246,0.3);border-radius:8px;color:#e2d9f3;font-size:.83rem;box-sizing:border-box">
+                  </div>
+                  <!-- Sheet selector (multi-sheet mode, hidden by default) -->
+                  <div id="perf-sheet-wrap" style="display:none">
+                    <label style="font-size:.78rem;color:#9d8ec7;display:block;margin-bottom:.25rem">Chọn tháng (sheet) *</label>
+                    <select id="perf-sheet-select"
+                      style="width:100%;padding:.5rem .7rem;background:#1a0e35;border:1px solid rgba(139,92,246,0.4);border-radius:8px;color:#e2d9f3;font-size:.83rem;box-sizing:border-box">
+                    </select>
+                  </div>
+                  <div>
+                    <label style="font-size:.78rem;color:#9d8ec7;display:block;margin-bottom:.25rem">File Excel (.xlsx) *</label>
+                    <input id="perf-file" type="file" accept=".xlsx,.xls"
+                      onchange="onPerfFileChange(this)"
+                      style="width:100%;padding:.45rem .7rem;background:rgba(255,255,255,0.05);border:1px solid rgba(139,92,246,0.3);border-radius:8px;color:#9d8ec7;font-size:.82rem;box-sizing:border-box">
+                  </div>
+                </div>
+                <div id="perf-sheet-hint" style="display:none;font-size:.75rem;color:#a78bfa;margin-bottom:.6rem;padding:.4rem .7rem;background:rgba(139,92,246,0.08);border-radius:6px;border-left:3px solid #7c3aed">
+                  📋 File có nhiều sheet — chọn tháng muốn import ở trên. Mỗi lần import 1 tháng.
+                </div>
+                <div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap">
+                  <button class="btn-primary" onclick="parseAndPreviewExcel()" style="font-size:.82rem;padding:.45rem 1.1rem">🔍 Phân Tích File</button>
+                  <button onclick="togglePerfImportForm()" style="background:rgba(255,255,255,0.06);border:none;border-radius:8px;color:#9d8ec7;padding:.45rem 1rem;cursor:pointer;font-size:.82rem">Đóng</button>
+                </div>
+              </div>
+
+              <!-- Preview -->
+              <div id="perf-preview" style="display:none">
+                <p id="perf-preview-info" style="font-size:.82rem;color:#a78bfa;margin-bottom:.75rem"></p>
+                <div class="table-wrap table-scroll" style="max-height:280px;overflow-y:auto">
+                  <table>
+                    <thead>
+                      <tr><th>#</th><th>Ngày</th><th>Cặp GD</th><th>Kết Quả</th><th>Lợi Nhuận (%)</th></tr>
+                    </thead>
+                    <tbody id="perf-preview-tbody"></tbody>
+                  </table>
+                </div>
+                <div style="display:flex;gap:.5rem;margin-top:.75rem">
+                  <button class="btn-primary" onclick="confirmPerfImport()" id="perf-confirm-btn" style="font-size:.82rem;padding:.5rem 1.2rem"><img src="icon_save.svg" class="btn-svg-icon" alt=""> Xác Nhận Import</button>
+                  <button onclick="cancelPerfImport()" style="background:rgba(255,255,255,0.06);border:none;border-radius:8px;color:#9d8ec7;padding:.45rem 1rem;cursor:pointer;font-size:.82rem">Huỷ</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Data viewer — accordion per month -->
+            <div class="chart-card">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:.5rem">
+                <h3 style="margin:0;color:#e2d9f3;font-size:1rem">📋 Dữ Liệu Đã Import</h3>
+                <button class="btn-secondary" onclick="loadPerformanceData()" style="font-size:.8rem">🔄 Làm mới</button>
+              </div>
+              <!-- Each month accordion rendered dynamically by JS -->
+              <div id="perf-accordion"></div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- ── SETTINGS PAGE ── -->
+        <div class="page" id="page-settings">
+          <div style="max-width:640px">
+
+            <!-- Change Password -->
+            <div class="chart-card" style="margin-bottom:1.25rem">
+              <div class="chart-title">🔐 Đổi Mật Khẩu</div>
+              <p style="font-size:.85rem;color:var(--text2);margin-bottom:1.25rem">
+                Đang đăng nhập: <strong id="cp-email-hint" style="color:var(--purple2)"></strong>
+              </p>
+              <div class="form-group">
+                <label>Mật Khẩu Mới</label>
+                <input type="password" id="cp-new" placeholder="Tối thiểu 6 ký tự">
+              </div>
+              <div class="form-group">
+                <label>Xác Nhận Mật Khẩu Mới</label>
+                <input type="password" id="cp-confirm" placeholder="Nhập lại mật khẩu mới">
+              </div>
+              <button class="btn-primary" onclick="changePassword()" style="margin-top:.25rem">
+                🔐 Cập Nhật Mật Khẩu
+              </button>
+            </div>
+
+            <!-- How to add more admins -->
+            <div class="chart-card">
+              <div class="chart-title"><img src="icon_personal.svg" class="nav-svg-icon" alt=""> Thêm Tài Khoản Admin Mới</div>
+              <p style="font-size:.88rem;color:var(--text2);line-height:1.7;margin-bottom:1rem">
+                Tài khoản admin được quản lý qua <strong style="color:var(--text)">Supabase Authentication</strong>. Để thêm admin mới, làm theo các bước sau:
+              </p>
+              <div style="display:flex;flex-direction:column;gap:.75rem">
+                <div style="display:flex;gap:.75rem;align-items:flex-start;padding:.9rem;background:var(--bg3);border-radius:10px;border:1px solid var(--border)">
+                  <span style="font-size:1.3rem;flex-shrink:0">1️⃣</span>
+                  <div>
+                    <div style="font-weight:700;font-size:.9rem;margin-bottom:.2rem">Mở Supabase Dashboard</div>
+                    <div style="font-size:.82rem;color:var(--text2)">Vào <a href="https://supabase.com/dashboard" target="_blank" style="color:var(--purple2)">supabase.com/dashboard</a> → chọn project <strong style="color:var(--text)">Bộ Tộc</strong></div>
+                  </div>
+                </div>
+                <div style="display:flex;gap:.75rem;align-items:flex-start;padding:.9rem;background:var(--bg3);border-radius:10px;border:1px solid var(--border)">
+                  <span style="font-size:1.3rem;flex-shrink:0">2️⃣</span>
+                  <div>
+                    <div style="font-weight:700;font-size:.9rem;margin-bottom:.2rem">Vào Authentication → Users</div>
+                    <div style="font-size:.82rem;color:var(--text2)">Bấm nút <strong style="color:var(--text)">「Invite User」</strong> → nhập email của admin mới → gửi lời mời</div>
+                  </div>
+                </div>
+                <div style="display:flex;gap:.75rem;align-items:flex-start;padding:.9rem;background:var(--bg3);border-radius:10px;border:1px solid var(--border)">
+                  <span style="font-size:1.3rem;flex-shrink:0">3️⃣</span>
+                  <div>
+                    <div style="font-weight:700;font-size:.9rem;margin-bottom:.2rem">Admin nhận email → đặt mật khẩu</div>
+                    <div style="font-size:.82rem;color:var(--text2)">Sau khi nhận email mời, admin mới bấm link → đặt mật khẩu → đăng nhập bình thường vào trang <strong style="color:var(--text)">admin.html</strong></div>
+                  </div>
+                </div>
+                <div style="display:flex;gap:.75rem;align-items:flex-start;padding:.9rem;background:rgba(245,158,11,0.06);border-radius:10px;border:1px solid rgba(245,158,11,0.2)">
+                  <span style="font-size:1.3rem;flex-shrink:0">⚠️</span>
+                  <div>
+                    <div style="font-weight:700;font-size:.9rem;margin-bottom:.2rem;color:var(--gold)">Xóa tài khoản admin</div>
+                    <div style="font-size:.82rem;color:var(--text2)">Vào <strong style="color:var(--text)">Authentication → Users</strong> trong Supabase → tìm user → bấm <strong style="color:var(--red)">Delete</strong></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </div><!-- /content -->
+    </div><!-- /main -->
+  </div><!-- /layout -->
+</div><!-- /app -->
+
+<!-- ════════════════════════════════
+     EVENT MODAL
+════════════════════════════════ -->
+<div class="modal-overlay" id="event-modal">
+  <div class="modal-drawer">
+    <div class="modal-header">
+      <h3 id="event-modal-title">Thêm Event Mới</h3>
+      <button class="modal-close" onclick="closeEventModal()">✕</button>
+    </div>
+    <input type="hidden" id="ev-id">
+    <div class="form-group">
+      <label>Tiêu Đề *</label>
+      <input type="text" id="ev-title" placeholder="Live Trading Session — Phân tích BTC tuần 15">
+    </div>
+    <div class="form-group">
+      <label>Mô Tả</label>
+      <textarea id="ev-desc" rows="4" placeholder="Mô tả ngắn về event..."></textarea>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Ngày Bắt Đầu</label>
+        <input type="date" id="ev-date">
+      </div>
+      <div class="form-group">
+        <label>Ngày Kết Thúc</label>
+        <input type="date" id="ev-end-date">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Giờ Bắt Đầu</label>
+        <input type="time" id="ev-start-time">
+      </div>
+      <div class="form-group">
+        <label>Giờ Kết Thúc</label>
+        <input type="time" id="ev-end-time">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Loại Event</label>
+        <select id="ev-type">
+          <option value="live">Live Trading</option>
+          <option value="workshop">Workshop</option>
+          <option value="ama">AMA</option>
+          <option value="exchange">Sự Kiện Sàn</option>
+          <option value="tribe">Sự Kiện Bộ Tộc</option>
+          <option value="other">Khác</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Trạng Thái</label>
+        <select id="ev-status">
+          <option value="draft">Nháp</option>
+          <option value="published">Đã Đăng</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Địa Điểm / Link</label>
+      <input type="text" id="ev-location" placeholder="Telegram Group / Zoom Link">
+    </div>
+    <div class="form-group">
+      <label>Link Đăng Ký</label>
+      <input type="text" id="ev-link" placeholder="https://...">
+    </div>
+    <div class="form-group">
+      <label>Ảnh Bìa</label>
+      <div class="img-upload-wrap" id="ev-img-wrap" onclick="document.getElementById('ev-img-file').click()">
+        <div class="img-upload-placeholder" id="ev-img-placeholder">
+          <img src="icon_image.svg" class="img-upload-svg" alt="">
+          <span>Bấm để chọn ảnh từ máy</span>
+          <span style="font-size:.75rem;color:var(--text3)">JPG, PNG, WEBP — tối đa 5MB</span>
+        </div>
+        <img id="ev-img-preview" style="display:none;width:100%;height:160px;object-fit:cover;border-radius:8px">
+      </div>
+      <input type="file" id="ev-img-file" accept="image/*" style="display:none" onchange="handleImageUpload(this,'ev-image','ev-img-preview','ev-img-placeholder','ev-upload-status')">
+      <div id="ev-upload-status" style="font-size:.8rem;margin-top:.4rem;color:var(--text2)"></div>
+      <input type="hidden" id="ev-image">
+    </div>
+    <div class="form-actions">
+      <button class="btn-secondary" onclick="closeEventModal()">Hủy</button>
+      <button class="btn-primary" onclick="saveEvent()"><img src="icon_save.svg" class="btn-svg-icon" alt=""> Lưu Event</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════
+     REVIEW MODAL
+════════════════════════════════ -->
+<div class="modal-overlay" id="review-modal">
+  <div class="modal-drawer">
+    <div class="modal-header">
+      <h3 id="review-modal-title">Thêm Review Mới</h3>
+      <button class="modal-close" onclick="closeReviewModal()">✕</button>
+    </div>
+    <input type="hidden" id="rv-id">
+    <div class="form-group">
+      <label>Ảnh Review *</label>
+      <div class="img-upload-wrap" id="rv-img-wrap" onclick="document.getElementById('rv-img-file').click()">
+        <div class="img-upload-placeholder" id="rv-img-placeholder">
+          <img src="icon_image.svg" class="img-upload-svg" alt="">
+          <span>Bấm để chọn ảnh chụp tin nhắn</span>
+          <span style="font-size:.75rem;color:var(--text3)">JPG, PNG, WEBP — tối đa 5MB · Khuyến nghị tỷ lệ 9:16 (dọc)</span>
+        </div>
+        <img id="rv-img-preview" style="display:none;width:100%;max-height:280px;object-fit:contain;border-radius:8px;background:rgba(0,0,0,.3)">
+      </div>
+      <input type="file" id="rv-img-file" accept="image/*" style="display:none" onchange="handleImageUpload(this,'rv-image','rv-img-preview','rv-img-placeholder','rv-upload-status')">
+      <div id="rv-upload-status" style="font-size:.8rem;margin-top:.4rem;color:var(--text2)"></div>
+      <input type="hidden" id="rv-image">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Thứ Tự Hiển Thị</label>
+        <input type="number" id="rv-order" value="0" min="0" placeholder="Số càng cao càng hiện trên đầu">
+      </div>
+      <div class="form-group">
+        <label>Trạng Thái</label>
+        <select id="rv-status">
+          <option value="draft">📝 Lưu Nháp</option>
+          <option value="published">🌐 Đăng Ngay</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeReviewModal()">Hủy</button>
+      <button class="btn-primary" onclick="saveReview()"><img src="icon_save.svg" class="btn-svg-icon" alt=""> Lưu Review</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════
+     NEWS MODAL
+════════════════════════════════ -->
+<div class="modal-overlay" id="news-modal">
+  <div class="modal-drawer">
+    <div class="modal-header">
+      <h3 id="news-modal-title">Thêm Bài Viết Mới</h3>
+      <button class="modal-close" onclick="closeNewsModal()">✕</button>
+    </div>
+    <input type="hidden" id="nw-id">
+    <div class="form-group">
+      <label>Tiêu Đề (Tiếng Việt) *</label>
+      <input type="text" id="nw-title-vi" placeholder="BTC phá vỡ vùng kháng cự $95K...">
+    </div>
+    <div class="form-group">
+      <label>Tiêu Đề (Tiếng Anh)</label>
+      <input type="text" id="nw-title-en" placeholder="BTC breaks $95K resistance...">
+    </div>
+    <div class="form-group">
+      <label>Tóm Tắt (Tiếng Việt)</label>
+      <textarea id="nw-excerpt-vi" rows="3" placeholder="Nội dung tóm tắt hiển thị trên website..."></textarea>
+    </div>
+    <div class="form-group">
+      <label>Tóm Tắt (Tiếng Anh)</label>
+      <textarea id="nw-excerpt-en" rows="3" placeholder="Short excerpt shown on website..."></textarea>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Tag</label>
+        <select id="nw-tag">
+          <option value="Phân Tích">Phân Tích</option>
+          <option value="Thị Trường">Thị Trường</option>
+          <option value="Tin Tức">Tin Tức</option>
+          <option value="Kiến Thức">Kiến Thức</option>
+          <option value="Cộng Đồng">Cộng Đồng</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Ngày Đăng</label>
+        <input type="date" id="nw-date">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Ảnh Bìa</label>
+      <div class="img-upload-wrap" id="nw-img-wrap" onclick="document.getElementById('nw-img-file').click()">
+        <div class="img-upload-placeholder" id="nw-img-placeholder">
+          <img src="icon_image.svg" class="img-upload-svg" alt="">
+          <span>Bấm để chọn ảnh từ máy</span>
+          <span style="font-size:.75rem;color:var(--text3)">JPG, PNG, WEBP — tối đa 5MB</span>
+        </div>
+        <img id="nw-img-preview" style="display:none;width:100%;height:160px;object-fit:cover;border-radius:8px">
+      </div>
+      <input type="file" id="nw-img-file" accept="image/*" style="display:none" onchange="handleImageUpload(this,'nw-image','nw-img-preview','nw-img-placeholder','nw-upload-status')">
+      <div id="nw-upload-status" style="font-size:.8rem;margin-top:.4rem;color:var(--text2)"></div>
+      <input type="hidden" id="nw-image">
+    </div>
+    <div class="form-group">
+      <label>Nội Dung Đầy Đủ (Tiếng Việt)</label>
+      <textarea id="nw-content-vi" rows="6" placeholder="Viết nội dung bài viết đầy đủ tại đây...&#10;&#10;Hỗ trợ xuống dòng bình thường."></textarea>
+    </div>
+    <div class="form-group">
+      <label>Nội Dung Đầy Đủ (Tiếng Anh) — tuỳ chọn</label>
+      <textarea id="nw-content-en" rows="4" placeholder="Full article content in English (optional)..."></textarea>
+    </div>
+    <div class="form-group">
+      <label>Trạng Thái</label>
+      <select id="nw-status">
+        <option value="draft">Nháp</option>
+        <option value="published">Đã Đăng</option>
+      </select>
+    </div>
+    <div class="form-actions">
+      <button class="btn-secondary" onclick="closeNewsModal()">Hủy</button>
+      <button class="btn-primary" onclick="saveNews()"><img src="icon_save.svg" class="btn-svg-icon" alt=""> Lưu Bài Viết</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════
+     DAILY NEWS MODAL
+════════════════════════════════ -->
+<div class="modal-overlay" id="daily-news-modal">
+  <div class="modal-drawer">
+    <div class="modal-header">
+      <h3 id="dnn-modal-title">Thêm Tin Hằng Ngày</h3>
+      <button class="modal-close" onclick="closeDailyNewsModal()">✕</button>
+    </div>
+    <input type="hidden" id="dnn-id">
+    <div class="form-row">
+      <div class="form-group">
+        <label>Ngày Đăng *</label>
+        <input type="date" id="dnn-date">
+      </div>
+      <div class="form-group">
+        <label>Trạng Thái</label>
+        <select id="dnn-status">
+          <option value="published">Đã Đăng</option>
+          <option value="draft">Nháp</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Tiêu Đề *</label>
+      <input type="text" id="dnn-title" placeholder="Nhập tiêu đề tin tức...">
+    </div>
+    <div class="form-group">
+      <label>Mô Tả (tuỳ chọn)</label>
+      <textarea id="dnn-description" rows="4" placeholder="Nội dung chi tiết hiển thị khi click vào ảnh..."></textarea>
+    </div>
+    <div class="form-group">
+      <label>Link Nguồn (tuỳ chọn)</label>
+      <input type="url" id="dnn-source-url" placeholder="https://...">
+    </div>
+    <div class="form-group">
+      <label>Ảnh *</label>
+      <div class="img-upload-wrap" id="dnn-img-wrap" onclick="document.getElementById('dnn-img-file').click()">
+        <div class="img-upload-placeholder" id="dnn-img-placeholder">
+          <img src="icon_image.svg" class="img-upload-svg" alt="">
+          <span>Bấm để chọn ảnh từ máy</span>
+          <span style="font-size:.75rem;color:var(--text3)">JPG, PNG, WEBP — tối đa 5MB</span>
+        </div>
+        <img id="dnn-img-preview" style="display:none;width:100%;height:160px;object-fit:cover;border-radius:8px">
+      </div>
+      <input type="file" id="dnn-img-file" accept="image/*" style="display:none"
+        onchange="handleImageUpload(this,'dnn-image','dnn-img-preview','dnn-img-placeholder','dnn-upload-status')">
+      <div id="dnn-upload-status" style="font-size:.8rem;margin-top:.4rem;color:var(--text2)"></div>
+      <input type="hidden" id="dnn-image">
+    </div>
+    <div class="form-actions">
+      <button class="btn-secondary" onclick="closeDailyNewsModal()">Hủy</button>
+      <button class="btn-primary" onclick="saveDailyNews()"><img src="icon_save.svg" class="btn-svg-icon" alt=""> Lưu Tin</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════
+     EDIT TRADE MODAL
+════════════════════════════════ -->
+<div class="modal-overlay" id="edit-trade-modal">
+  <div class="modal-drawer" style="max-width:420px">
+    <div class="modal-header">
+      <h3 class="modal-title"><img src="icon_pencil.svg" class="btn-svg-icon" alt=""> Chỉnh Sửa Lệnh</h3>
+      <button class="modal-close" onclick="closeEditTradeModal()">✕</button>
+    </div>
+    <input type="hidden" id="et-id">
+    <input type="hidden" id="et-label">
+    <div class="form-group">
+      <label>Ngày Giao Dịch</label>
+      <input type="text" id="et-date" placeholder="VD: 15/03/2025">
+    </div>
+    <div class="form-group">
+      <label>Cặp / Tài Sản</label>
+      <input type="text" id="et-asset" placeholder="VD: XAUUSD, BTC/USDT...">
+    </div>
+    <div class="form-group">
+      <label>Kết Quả</label>
+      <select id="et-result">
+        <option value="THẮNG">THẮNG</option>
+        <option value="THUA">THUA</option>
+        <option value="HÒA">HÒA</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Lợi Nhuận (%)</label>
+      <input type="number" id="et-pnl" placeholder="VD: 2.5 hoặc -1.2" step="0.01">
+    </div>
+    <div class="form-actions">
+      <button class="btn-secondary" onclick="closeEditTradeModal()">Hủy</button>
+      <button class="btn-primary" onclick="saveEditTrade()"><img src="icon_save.svg" class="btn-svg-icon" alt=""> Lưu Thay Đổi</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ════════════════════════════════
+//  CONFIG
+// ════════════════════════════════
+const SUPABASE_URL = 'https://gvmgnaddbodbovxiugjd.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_1BHwk_6fFxJfFkGP3pKiig_5K9qToFb';
+
+// Production domain — used as the `redirectTo` target for invite/recovery emails
+const SITE_URL = 'https://botoc.trading';
+
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+  auth: { persistSession: true, autoRefreshToken: true, storageKey: 'botoc_admin' }
+});
+
+// ════════════════════════════════
+//  LOGIN  (Supabase Auth)
+// ════════════════════════════════
+async function doLogin() {
+  const email = document.getElementById('inp-user').value.trim();
+  const pass  = document.getElementById('inp-pass').value;
+  const err   = document.getElementById('login-error');
+  const btn   = document.querySelector('.login-btn');
+  if (!email || !pass) { err.textContent = 'Vui lòng nhập email và mật khẩu.'; err.style.display='block'; return; }
+  btn.textContent = 'Đang đăng nhập...'; btn.disabled = true;
+  const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
+  btn.textContent = 'Đăng Nhập →'; btn.disabled = false;
+  if (error) {
+    err.textContent = 'Sai email hoặc mật khẩu.';
+    err.style.display = 'block';
+    return;
+  }
+  // ── Whitelist check: only emails in `admins` table may enter ──
+  const { data: isAdmin, error: rpcErr } = await sb.rpc('is_admin');
+  if (rpcErr || !isAdmin) {
+    await sb.auth.signOut();
+    err.textContent = 'Tài khoản này không có quyền truy cập trang quản trị.';
+    err.style.display = 'block';
+    return;
+  }
+  err.style.display = 'none';
+  showApp(data.user);
+}
+
+document.getElementById('inp-pass').addEventListener('keydown', e => { if (e.key==='Enter') doLogin(); });
+document.getElementById('inp-user').addEventListener('keydown', e => { if (e.key==='Enter') document.getElementById('inp-pass').focus(); });
+
+async function doLogout() {
+  await sb.auth.signOut();
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('inp-pass').value = '';
+  document.getElementById('inp-user').value = '';
+}
+
+function showApp(user) {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  // Show logged-in email
+  const email = user?.email || 'Admin';
+  document.getElementById('admin-email').textContent = email;
+  document.getElementById('avatar-letter').textContent = email[0].toUpperCase();
+  // Pre-fill change password form email hint
+  document.getElementById('cp-email-hint').textContent = email;
+  initApp();
+}
+
+// Auto-restore session on load — but only if user is whitelisted admin
+document.addEventListener('DOMContentLoaded', async () => {
+  const { data: { session } } = await sb.auth.getSession();
+  if (session?.user) {
+    const { data: isAdmin } = await sb.rpc('is_admin');
+    if (isAdmin) {
+      showApp(session.user);
+    } else {
+      // Member session leaked into admin page — sign out silently
+      await sb.auth.signOut();
+    }
+  }
+});
+
+// ════════════════════════════════
+//  CLOCK
+// ════════════════════════════════
+function updateClock() {
+  const now = new Date();
+  document.getElementById('clock').textContent = now.toLocaleTimeString('vi-VN', {
+    hour:'2-digit', minute:'2-digit', second:'2-digit'
+  });
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ════════════════════════════════
+//  NAVIGATION
+// ════════════════════════════════
+const pageInfo = {
+  dashboard:   { title: 'Dashboard',         sub: 'Tổng quan hoạt động cộng đồng' },
+  members:     { title: 'Thành Viên',         sub: 'Danh sách tất cả thành viên đã đăng ký' },
+  events:      { title: 'Quản Lý Events',        sub: 'Tạo và quản lý các sự kiện' },
+  reviews:     { title: 'Quản Lý Review',        sub: 'Upload ảnh đánh giá thành viên' },
+  news:        { title: 'Quản Lý Tin Tức',       sub: 'Tạo và quản lý bài viết' },
+  'daily-news':{ title: 'Tin Tức Hằng Ngày',    sub: 'Đăng tin và hình ảnh hằng ngày' },
+  'knowledge':  { title: 'Kiến Thức Crypto',     sub: 'Duyệt và quản lý bài viết từ cộng đồng' },
+  comments:    { title: 'Bình Luận',             sub: 'Quản lý bình luận của cộng đồng' },
+  macro:       { title: 'Lịch Kinh Tế Vĩ Mô',  sub: 'Quản lý sự kiện kinh tế vĩ mô thế giới' },
+  performance: { title: 'Hiệu Suất',             sub: 'Import và quản lý dữ liệu hiệu suất giao dịch' },
+  settings:    { title: 'Cài Đặt Tài Khoản', sub: 'Đổi mật khẩu và quản lý quyền truy cập' },
+};
+
+function showPage(name, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  el.classList.add('active');
+  const info = pageInfo[name] || {};
+  document.getElementById('page-title').textContent = info.title || name;
+  document.getElementById('page-sub').textContent = info.sub || '';
+  if (name === 'dashboard') loadDashboard();
+  if (name === 'members') loadMembers();
+  if (name === 'events') loadEvents();
+  if (name === 'reviews') loadReviews();
+  if (name === 'news') loadNews();
+  if (name === 'daily-news') loadDailyNewsAdmin();
+  if (name === 'comments') loadCommentsPage();
+  if (name === 'knowledge') loadKnowledgeAdmin();
+  if (name === 'macro') loadMacroPage();
+  if (name === 'performance') loadPerformancePage();
+  // Auto-close mobile sidebar after switching page
+  closeMobileSidebar();
+}
+
+// ════════════════════════════════
+//  MOBILE SIDEBAR (hamburger menu)
+// ════════════════════════════════
+function toggleMobileSidebar() {
+  const sb       = document.querySelector('.sidebar');
+  const backdrop = document.getElementById('sidebar-backdrop');
+  const ham      = document.getElementById('hamburger-btn');
+  if (!sb) return;
+  const isOpen = sb.classList.contains('open');
+  sb.classList.toggle('open', !isOpen);
+  if (backdrop) backdrop.classList.toggle('open', !isOpen);
+  if (ham) ham.classList.toggle('open', !isOpen);
+  document.body.style.overflow = !isOpen ? 'hidden' : '';
+}
+
+function closeMobileSidebar() {
+  const sb       = document.querySelector('.sidebar');
+  const backdrop = document.getElementById('sidebar-backdrop');
+  const ham      = document.getElementById('hamburger-btn');
+  if (sb) sb.classList.remove('open');
+  if (backdrop) backdrop.classList.remove('open');
+  if (ham) ham.classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+// Auto-close on resize to desktop
+window.addEventListener('resize', () => {
+  if (window.innerWidth > 600) closeMobileSidebar();
+});
+
+// ESC closes sidebar
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeMobileSidebar();
+});
+
+// ════════════════════════════════
+//  INIT APP
+// ════════════════════════════════
+async function initApp() {
+  await Promise.all([loadDashboard(), loadEvents(), loadNews()]);
+}
+
+// ════════════════════════════════
+//  DASHBOARD
+// ════════════════════════════════
+let chartProvince = null;
+let chartCapital  = null;
+
+async function loadDashboard() {
+  try {
+    // Fetch all registrations
+    const { data: regs, error: regErr } = await sb
+      .from('Registration')
+      .select('*')
+      .order('created_at', { ascending: false });
+    if (regErr) throw regErr;
+
+    // Fetch published events
+    const { count: evCount } = await sb
+      .from('events')
+      .select('id', { count: 'exact', head: true })
+      .eq('status', 'published');
+
+    // Fetch published news
+    const { count: nwCount } = await sb
+      .from('news')
+      .select('id', { count: 'exact', head: true })
+      .eq('status', 'published');
+
+    // KPI
+    const total = regs?.length || 0;
+    document.getElementById('kpi-total').textContent = total;
+    document.getElementById('kpi-events').textContent = evCount ?? 0;
+    document.getElementById('kpi-news').textContent = nwCount ?? 0;
+
+    // Province count
+    const provMap = {};
+    (regs || []).forEach(r => {
+      const p = r.tinh_thanh_pho || 'Không rõ';
+      provMap[p] = (provMap[p] || 0) + 1;
+    });
+    const provEntries = Object.entries(provMap).sort((a,b)=>b[1]-a[1]);
+    document.getElementById('kpi-provinces').textContent = provEntries.length;
+
+    // Capital count
+    const capMap = {};
+    (regs || []).forEach(r => {
+      const c = r.von || 'Không rõ';
+      capMap[c] = (capMap[c] || 0) + 1;
+    });
+
+    // Draw charts
+    drawProvinceChart(provEntries.slice(0,10));
+    drawCapitalChart(capMap);
+
+    // Recent table
+    renderRecentTable(regs?.slice(0, 15) || []);
+  } catch(e) {
+    console.error(e);
+    showToast('Lỗi tải dữ liệu dashboard', 'error');
+  }
+}
+
+const CHART_COLORS = [
+  'rgba(139,92,246,0.85)', 'rgba(245,158,11,0.85)', 'rgba(52,211,153,0.85)',
+  'rgba(96,165,250,0.85)', 'rgba(248,113,113,0.85)', 'rgba(167,139,250,0.85)',
+  'rgba(251,191,36,0.85)', 'rgba(110,231,183,0.85)', 'rgba(147,197,253,0.85)',
+  'rgba(252,165,165,0.85)'
+];
+
+function drawProvinceChart(entries) {
+  const ctx = document.getElementById('chart-province').getContext('2d');
+  if (chartProvince) chartProvince.destroy();
+  chartProvince = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: entries.map(([k]) => k),
+      datasets: [{
+        label: 'Thành viên',
+        data: entries.map(([,v]) => v),
+        backgroundColor: CHART_COLORS,
+        borderRadius: 6,
+        borderSkipped: false,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { color: '#9d8ec7', font: { size: 11 } }, grid: { color: 'rgba(139,92,246,0.08)' } },
+        y: { ticks: { color: '#9d8ec7', font: { size: 11 } }, grid: { color: 'rgba(139,92,246,0.08)' }, beginAtZero: true }
+      }
+    }
+  });
+}
+
+function drawCapitalChart(capMap) {
+  const ctx = document.getElementById('chart-capital').getContext('2d');
+  if (chartCapital) chartCapital.destroy();
+  const entries = Object.entries(capMap).sort((a,b)=>b[1]-a[1]);
+  chartCapital = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: entries.map(([k]) => k),
+      datasets: [{
+        data: entries.map(([,v]) => v),
+        backgroundColor: CHART_COLORS,
+        borderColor: '#0d0920',
+        borderWidth: 2,
+        hoverOffset: 8,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'right',
+          labels: { color: '#9d8ec7', font: { size: 11 }, padding: 12 }
+        }
+      },
+      cutout: '65%',
+    }
+  });
+}
+
+function renderRecentTable(rows) {
+  const tbody = document.getElementById('recent-tbody');
+  if (!rows.length) {
+    tbody.innerHTML = '<tr><td colspan="8" class="empty"><div class="icon">📭</div><p>Chưa có đăng ký nào</p></td></tr>';
+    return;
+  }
+  tbody.innerHTML = rows.map((r, i) => {
+    const status = r.status || 'pending';
+    const actionBtn = status === 'pending' && r.email
+      ? `<button class="btn-publish" onclick="approveAndInviteMember('${r.id}','${jsEsc(r.email)}','${jsEsc(r.ho_ten||'')}')">✅ Duyệt</button>`
+      : status === 'approved'
+        ? '<span class="badge badge-green" style="font-size:.75rem">✓ Đã duyệt</span>'
+        : status === 'pending' && !r.email
+          ? '<span style="color:var(--text3);font-size:.78rem">Thiếu email</span>'
+          : '—';
+    return `
+    <tr>
+      <td><span style="color:var(--text3)">${i+1}</span></td>
+      <td style="font-weight:600">${esc(r.ho_ten || '')}</td>
+      <td style="font-size:.82rem;color:var(--accent)">${esc(r.email || '—')}</td>
+      <td>${esc(r.zalo || '—')}</td>
+      <td>${esc(r.tinh_thanh_pho || '—')}</td>
+      <td><span class="badge badge-purple">${esc(r.von || '—')}</span></td>
+      <td style="color:var(--text2);font-size:.8rem">${fmtDate(r.created_at)}</td>
+      <td>${actionBtn}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ════════════════════════════════
+//  MEMBERS
+// ════════════════════════════════
+let _allMembers = [];
+// Persists approved IDs for this session so DB refresh can't revert the badge
+const _approvedIds = new Set();
+
+async function loadMembers() {
+  const tbody = document.getElementById('members-tbody');
+  tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:2rem"><span class="spinner"></span></td></tr>';
+  const { data, error } = await sb.from('Registration').select('*').order('created_at', { ascending: false });
+  if (error) { tbody.innerHTML = '<tr><td colspan="9" class="empty"><p>Lỗi tải dữ liệu</p></td></tr>'; return; }
+  if (!data?.length) { tbody.innerHTML = '<tr><td colspan="9" class="empty"><div class="icon">📭</div><p>Chưa có thành viên nào</p></td></tr>'; return; }
+
+  _allMembers = data;
+
+  // Re-apply any session-level approvals so a DB refresh never reverts the badge
+  // (needed when the SQL status column migration hasn't been run yet)
+  if (_approvedIds.size > 0) {
+    _allMembers.forEach(m => {
+      if (_approvedIds.has(String(m.id))) m.status = 'approved';
+    });
+  }
+
+  // Populate filter dropdowns from data
+  const capitals  = [...new Set(data.map(r => r.von).filter(Boolean))].sort();
+  const goals     = [...new Set(data.map(r => r.muc_tieu).filter(Boolean))].sort();
+  const provinces = [...new Set(data.map(r => r.tinh_thanh_pho).filter(Boolean))].sort();
+  const capSel  = document.getElementById('mf-capital');
+  const goalSel = document.getElementById('mf-goal');
+  const provSel = document.getElementById('mf-province');
+  if (capSel)  { capSel.innerHTML  = '<option value="">Tất cả</option>'  + capitals.map(v => `<option value="${esc(v)}">${esc(v)}</option>`).join(''); }
+  if (goalSel) { goalSel.innerHTML = '<option value="">Tất cả</option>' + goals.map(v => `<option value="${esc(v)}">${esc(v)}</option>`).join(''); }
+  if (provSel) { provSel.innerHTML = '<option value="">Tất cả</option>' + provinces.map(v => `<option value="${esc(v)}">${esc(v)}</option>`).join(''); }
+
+  renderMembersTable(data);
+}
+
+function renderMembersTable(data) {
+  const tbody = document.getElementById('members-tbody');
+  const countEl = document.getElementById('mf-count');
+  if (countEl) countEl.textContent = `${data.length} thành viên`;
+  if (!data.length) { tbody.innerHTML = '<tr><td colspan="9" class="empty"><div class="icon">🔍</div><p>Không có kết quả phù hợp</p></td></tr>'; return; }
+
+  tbody.innerHTML = data.map((r,i) => {
+    const status = r.status || 'pending';
+    const statusBadge =
+      status === 'approved'  ? '<span class="badge badge-green">✓ Đã duyệt</span>'  :
+      status === 'inactive'  ? '<span class="badge badge-gray">⊘ Vô hiệu</span>'    :
+      status === 'rejected'  ? '<span class="badge badge-red">✗ Từ chối</span>'     :
+                               '<span class="badge badge-gold">⏳ Chờ duyệt</span>';
+
+    const approveBtn = (status === 'pending' && r.email)
+      ? `<button class="btn-publish" onclick="approveAndInviteMember('${r.id}','${jsEsc(r.email)}','${jsEsc(r.ho_ten||'')}',this)">✅ Duyệt</button>`
+      : '';
+    const inactiveBtn = (status === 'approved')
+      ? `<button class="btn-danger" style="font-size:.75rem;padding:.25rem .55rem" onclick="setMemberStatus('${r.id}','inactive','${jsEsc(r.ho_ten||r.email||'')}')">⊘ Vô hiệu</button>`
+      : (status === 'inactive')
+        ? `<button class="btn-publish" style="font-size:.75rem;padding:.25rem .55rem" onclick="setMemberStatus('${r.id}','approved','${jsEsc(r.ho_ten||r.email||'')}')">↩ Kích hoạt</button>`
+        : '';
+    const resendBtn = (status === 'approved' && r.email)
+      ? `<button class="btn-secondary" style="font-size:.75rem;padding:.25rem .55rem" onclick="resendPasswordEmail('${jsEsc(r.email)}','${jsEsc(r.ho_ten||'')}')">🔑 Gửi lại</button>`
+      : '';
+    const noEmailNote = (status === 'pending' && !r.email) ? `<span style="color:var(--text3);font-size:.78rem">Thiếu email</span>` : '';
+    const deleteBtn = `<button class="btn-danger" style="font-size:.75rem;padding:.25rem .5rem;opacity:.7" onclick="deleteMember('${r.id}','${jsEsc(r.ho_ten||r.email||'')}')"><img src="icon_trashcan.svg" class="btn-svg-icon" alt=""></button>`;
+
+    // Extra info folded under name
+    const extraInfo = [
+      r.tinh_thanh_pho ? `📍 ${esc(r.tinh_thanh_pho)}` : '',
+      r.telegram       ? `✈ ${esc(r.telegram)}`        : ''
+    ].filter(Boolean).join(' · ');
+
+    // Muc tieu: shorten display
+    const goalShort = (r.muc_tieu || '—').split(',').map(s => s.trim()).slice(0,2).join(', ');
+
+    return `
+    <tr style="${status==='inactive'?'opacity:.5':''}">
+      <td style="color:var(--text3);font-size:.8rem">${i+1}</td>
+      <td>
+        <div style="font-weight:600;font-size:.88rem">${esc(r.ho_ten || '—')}</div>
+        ${extraInfo ? `<div style="font-size:.72rem;color:var(--text3);margin-top:.2rem">${extraInfo}</div>` : ''}
+      </td>
+      <td style="font-size:.78rem;color:var(--accent);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(r.email || '—')}</td>
+      <td style="font-size:.82rem">${esc(r.zalo || '—')}</td>
+      <td><span class="badge badge-purple" style="font-size:.72rem">${esc(r.von || '—')}</span></td>
+      <td style="font-size:.75rem;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(r.muc_tieu||'')}">
+        ${goalShort !== '—' ? goalShort : '—'}
+      </td>
+      <td style="color:var(--text2);font-size:.78rem;white-space:nowrap">${fmtDate(r.created_at)}</td>
+      <td>${statusBadge}</td>
+      <td>
+        <div class="action-group">
+          ${approveBtn}${inactiveBtn}${resendBtn}${noEmailNote}${deleteBtn}
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function applyMemberFilters() {
+  let filtered = [..._allMembers];
+  const status   = document.getElementById('mf-status')?.value;
+  const dateFrom = document.getElementById('mf-date-from')?.value;
+  const dateTo   = document.getElementById('mf-date-to')?.value;
+  const capital  = document.getElementById('mf-capital')?.value;
+  const goal     = document.getElementById('mf-goal')?.value;
+  const province = document.getElementById('mf-province')?.value;
+  const name     = (document.getElementById('mf-name')?.value || '').trim().toLowerCase();
+  const uid      = (document.getElementById('mf-uid')?.value || '').trim().toLowerCase();
+
+  if (status)   filtered = filtered.filter(r => (r.status || 'pending') === status);
+  if (dateFrom) filtered = filtered.filter(r => r.created_at && r.created_at.slice(0,10) >= dateFrom);
+  if (dateTo)   filtered = filtered.filter(r => r.created_at && r.created_at.slice(0,10) <= dateTo);
+  if (capital)  filtered = filtered.filter(r => r.von === capital);
+  if (goal)     filtered = filtered.filter(r => r.muc_tieu === goal);
+  if (province) filtered = filtered.filter(r => r.tinh_thanh_pho === province);
+  if (name)     filtered = filtered.filter(r => (r.ho_ten || '').toLowerCase().includes(name));
+  if (uid) filtered = filtered.filter(r => (r.uid_value || '').toLowerCase().includes(uid));
+
+  renderMembersTable(filtered);
+}
+
+function resetMemberFilters() {
+  ['mf-status','mf-capital','mf-goal','mf-province','mf-uid'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = '';
+  });
+  ['mf-date-from','mf-date-to'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = '';
+  });
+  const nameEl = document.getElementById('mf-name'); if (nameEl) nameEl.value = '';
+  renderMembersTable(_allMembers);
+}
+
+async function setMemberStatus(regId, newStatus, name) {
+  const label = newStatus === 'inactive' ? 'vô hiệu hóa' : 'kích hoạt lại';
+  if (!confirm(`${label.charAt(0).toUpperCase() + label.slice(1)} thành viên: ${name}?`)) return;
+  const { error } = await sb.from('Registration').update({ status: newStatus }).eq('id', regId);
+  if (error) { showToast('Lỗi: ' + error.message, 'error'); return; }
+  showToast(`Đã ${label} thành viên ${name}`, newStatus === 'inactive' ? 'error' : 'success');
+  loadMembers();
+}
+
+async function deleteMember(regId, name) {
+  if (!confirm(`⚠️ Xóa vĩnh viễn thành viên "${name}"?\n\nHành động này không thể hoàn tác.`)) return;
+  const { error } = await sb.from('Registration').delete().eq('id', regId);
+  if (error) { showToast('Lỗi xóa: ' + error.message, 'error'); return; }
+  showToast(`Đã xóa thành viên ${name}`, 'success');
+  loadMembers();
+}
+
+async function approveAndInviteMember(regId, email, name, btn) {
+  if (!confirm(`Duyệt và gửi email mời tới: ${email}?`)) return;
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Đang xử lý...'; }
+
+  // ── Optimistic UI: update badge immediately without waiting for DB ──
+  // Persist in _approvedIds so loadMembers() DB refresh never reverts the badge
+  _approvedIds.add(String(regId));
+  const idx = _allMembers.findIndex(m => String(m.id) === String(regId));
+  if (idx !== -1) {
+    _allMembers[idx].status = 'approved';
+    renderMembersTable(_allMembers);
+  }
+
+  // ── CRITICAL: snapshot admin's session before signUp() so we can restore it.
+  // sb.auth.signUp() switches the active session to the newly-created user when
+  // auto-confirm is on, which silently logs the admin out and breaks every
+  // subsequent RLS-protected query (including the status UPDATE below).
+  const { data: { session: adminSession } } = await sb.auth.getSession();
+
+  try {
+    // Step 1: Create Supabase Auth account (random password — member will set their own)
+    const { error: signUpErr } = await sb.auth.signUp({
+      email: email,
+      password: crypto.randomUUID(),
+      options: { data: { full_name: name, needs_password_set: true } }
+    });
+
+    // Restore admin session IMMEDIATELY, before any other call.
+    // Even if signUp errored, restore is still safe — if no switch happened it's a no-op.
+    if (adminSession) {
+      await sb.auth.setSession({
+        access_token:  adminSession.access_token,
+        refresh_token: adminSession.refresh_token
+      });
+    }
+
+    // Ignore "User already registered" errors (email already exists is fine)
+    if (signUpErr && !signUpErr.message?.includes('already registered')) {
+      throw new Error('Tạo tài khoản thất bại: ' + signUpErr.message);
+    }
+
+    // Step 2: Send password-set email (member clicks link → PASSWORD_RECOVERY event)
+    const redirectUrl = SITE_URL + '/index.html';
+    const { error: resetErr } = await sb.auth.resetPasswordForEmail(email, {
+      redirectTo: redirectUrl
+    });
+    if (resetErr) throw new Error('Gửi email thất bại: ' + resetErr.message);
+
+    // Step 3: Mark registration as approved in DB (now as admin — RLS allows)
+    const { error: updateErr } = await sb.from('Registration').update({ status: 'approved' }).eq('id', regId);
+    if (updateErr) {
+      // Column might not exist yet — warn but don't block (optimistic update already applied)
+      console.warn('Status update warning:', updateErr.message);
+      showToast(`✅ Đã gửi email tới ${email} (⚠️ Chạy SQL migration để lưu trạng thái)`, 'success');
+    } else {
+      showToast(`✅ Đã duyệt và gửi email tới ${email}`, 'success');
+    }
+    await loadMembers(); // Full refresh from DB
+  } catch(e) {
+    showToast('❌ ' + e.message, 'error');
+    // Revert optimistic update on failure
+    _approvedIds.delete(String(regId));
+    if (idx !== -1) { _allMembers[idx].status = 'pending'; renderMembersTable(_allMembers); }
+    if (btn) { btn.disabled = false; btn.textContent = '✅ Duyệt'; }
+  }
+}
+
+// ════════════════════════════════
+//  EVENTS
+// ════════════════════════════════
+async function resendPasswordEmail(email, name) {
+  if (!confirm('Gửi lại email đặt mật khẩu tới: ' + email + '?')) return;
+  try {
+    const { error } = await sb.auth.resetPasswordForEmail(email, {
+      redirectTo: SITE_URL + '/index.html'
+    });
+    if (error) throw error;
+    showToast('✅ Đã gửi lại email tới ' + email, 'success');
+  } catch(e) {
+    showToast('❌ ' + (e.message || 'Gửi email thất bại'), 'error');
+  }
+}
+
+
+function parseLegacyTimeRange(timeStr) {
+  if (!timeStr) return { start: '', end: '' };
+  const parts = String(timeStr).split(/[—–-]/).map(s => s.trim()).filter(Boolean);
+  return { start: parts[0] || '', end: parts[1] || parts[0] || '' };
+}
+
+function fmtEventRange(r) {
+  const st = r.event_start_time ? r.event_start_time.slice(0,5) : '';
+  const et = r.event_end_time ? r.event_end_time.slice(0,5) : '';
+  if (st || et) {
+    const multiDay = r.event_end_date && r.event_end_date !== r.event_date;
+    if (multiDay) return `${fmtDateShort(r.event_date)} ${st} → ${fmtDateShort(r.event_end_date)} ${et}`.replace(/\s+/g,' ').trim();
+    return [st, et].filter(Boolean).join(' — ');
+  }
+  return r.event_time || '';
+}
+
+async function loadEvents() {
+  const tbody = document.getElementById('events-tbody');
+  tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:2rem"><span class="spinner"></span></td></tr>';
+  const { data, error } = await sb.from('events').select('*').order('created_at', { ascending: false });
+  if (error) { tbody.innerHTML = '<tr><td colspan="6" class="empty"><p>⚠️ Bảng "events" chưa tồn tại. Hãy chạy file supabase_setup.sql trước!</p></td></tr>'; return; }
+  if (!data?.length) { tbody.innerHTML = '<tr><td colspan="6"><div class="empty"><div class="icon">📅</div><p>Chưa có event nào. Nhấn "Thêm Event" để bắt đầu.</p></div></td></tr>'; return; }
+  const typeMap = { live:'Live Trading', workshop:'Workshop', ama:'AMA', other:'Khác' };
+  tbody.innerHTML = data.map(r => `
+    <tr>
+      <td style="font-weight:600;max-width:220px">${esc(r.title || '')}</td>
+      <td><span class="badge badge-blue">${typeMap[r.event_type] || r.event_type || '—'}</span></td>
+      <td style="font-size:.85rem">${r.event_date ? fmtDateShort(r.event_date) : '—'} ${fmtEventRange(r) ? '<br><span style="color:var(--text2);font-size:.78rem">'+esc(fmtEventRange(r))+'</span>' : ''}</td>
+      <td style="font-size:.82rem;color:var(--text2)">${esc(r.location || '—')}</td>
+      <td>${r.status==='published' ? '<span class="badge badge-green">Đã Đăng</span>' : '<span class="badge badge-gray">Nháp</span>'}</td>
+      <td>
+        <div class="action-group">
+          <button class="btn-edit" onclick="editEvent('${r.id}')"><img src="icon_pencil.svg" class="btn-svg-icon" alt=""> Sửa</button>
+          ${r.status==='published'
+            ? `<button class="btn-unpublish" onclick="toggleEventStatus('${r.id}','draft')">📥 Gỡ</button>`
+            : `<button class="btn-publish" onclick="toggleEventStatus('${r.id}','published')">🚀 Đăng</button>`
+          }
+          <button class="btn-danger" onclick="deleteEvent('${r.id}')"><img src="icon_trashcan.svg" class="btn-svg-icon" alt=""></button>
+        </div>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function openEventModal(data) {
+  const modal = document.getElementById('event-modal');
+  const isEdit = !!data;
+  document.getElementById('event-modal-title').textContent = isEdit ? 'Chỉnh Sửa Event' : 'Thêm Event Mới';
+  document.getElementById('ev-id').value      = data?.id || '';
+  document.getElementById('ev-title').value   = data?.title || '';
+  document.getElementById('ev-desc').value    = data?.description || '';
+  document.getElementById('ev-date').value    = data?.event_date || '';
+  const legacyTime = (!data?.event_start_time && !data?.event_end_time && data?.event_time) ? parseLegacyTimeRange(data.event_time) : { start:'', end:'' };
+  document.getElementById('ev-end-date').value   = data?.event_end_date || '';
+  document.getElementById('ev-start-time').value = data?.event_start_time ? data.event_start_time.slice(0,5) : legacyTime.start;
+  document.getElementById('ev-end-time').value   = data?.event_end_time ? data.event_end_time.slice(0,5) : legacyTime.end;
+  document.getElementById('ev-type').value    = data?.event_type || 'live';
+  document.getElementById('ev-status').value  = data?.status || 'draft';
+  document.getElementById('ev-location').value= data?.location || '';
+  document.getElementById('ev-link').value    = data?.register_link || '';
+  resetImageWidget('ev-img-preview','ev-img-placeholder','ev-image','ev-upload-status','ev-img-file');
+  if (data?.cover_image) {
+    restoreImagePreview(data.cover_image,'ev-img-preview','ev-img-placeholder');
+    document.getElementById('ev-image').value = data.cover_image;
+  }
+  modal.classList.add('open');
+}
+
+function closeEventModal() {
+  document.getElementById('event-modal').classList.remove('open');
+}
+
+async function editEvent(id) {
+  const { data } = await sb.from('events').select('*').eq('id', id).single();
+  if (data) openEventModal(data);
+}
+
+async function saveEvent() {
+  const id    = document.getElementById('ev-id').value;
+  const title = document.getElementById('ev-title').value.trim();
+  if (!title) { showToast('Vui lòng nhập tiêu đề', 'error'); return; }
+  const payload = {
+    title,
+    description:   document.getElementById('ev-desc').value.trim() || null,
+    event_date:       document.getElementById('ev-date').value || null,
+    event_end_date:   document.getElementById('ev-end-date').value || null,
+    event_start_time: document.getElementById('ev-start-time').value || null,
+    event_end_time:   document.getElementById('ev-end-time').value || null,
+    event_type:    document.getElementById('ev-type').value,
+    status:        document.getElementById('ev-status').value,
+    location:      document.getElementById('ev-location').value.trim() || null,
+    register_link: document.getElementById('ev-link').value.trim() || null,
+    cover_image:   document.getElementById('ev-image').value.trim() || null,
+  };
+  let error;
+  if (id) {
+    ({ error } = await sb.from('events').update(payload).eq('id', id));
+  } else {
+    ({ error } = await sb.from('events').insert([payload]));
+  }
+  if (error) { showToast('Lỗi: ' + error.message, 'error'); return; }
+  showToast(id ? 'Đã cập nhật event ✓' : 'Đã thêm event mới ✓', 'success');
+  closeEventModal();
+  loadEvents();
+}
+
+async function toggleEventStatus(id, status) {
+  const { error } = await sb.from('events').update({ status }).eq('id', id);
+  if (error) { showToast('Lỗi: ' + error.message, 'error'); return; }
+  showToast(status === 'published' ? '🚀 Đã đăng event!' : '📥 Đã gỡ event', 'success');
+  loadEvents();
+  loadDashboard();
+}
+
+async function deleteEvent(id) {
+  if (!confirm('Xác nhận xóa event này?')) return;
+  const { error } = await sb.from('events').delete().eq('id', id);
+  if (error) { showToast('Lỗi: ' + error.message, 'error'); return; }
+  showToast('Đã xóa event', 'success');
+  loadEvents();
+}
+
+// ════════════════════════════════
+//  NEWS
+// ════════════════════════════════
+async function loadNews() {
+  const tbody = document.getElementById('news-tbody');
+  tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:2rem"><span class="spinner"></span></td></tr>';
+  const { data, error } = await sb.from('news').select('*').order('created_at', { ascending: false });
+  if (error) { tbody.innerHTML = '<tr><td colspan="5" class="empty"><p>⚠️ Bảng "news" chưa tồn tại. Hãy chạy file supabase_setup.sql trước!</p></td></tr>'; return; }
+  if (!data?.length) { tbody.innerHTML = '<tr><td colspan="5"><div class="empty"><div class="icon">📰</div><p>Chưa có bài viết nào. Nhấn "Thêm Bài Viết" để bắt đầu.</p></div></td></tr>'; return; }
+  tbody.innerHTML = data.map(r => `
+    <tr>
+      <td style="font-weight:600;max-width:260px">${esc(r.title_vi || '')}</td>
+      <td><span class="badge badge-purple">${esc(r.tag || '—')}</span></td>
+      <td style="font-size:.82rem;color:var(--text2)">${r.published_date ? fmtDateShort(r.published_date) : '—'}</td>
+      <td>${r.status==='published' ? '<span class="badge badge-green">Đã Đăng</span>' : '<span class="badge badge-gray">Nháp</span>'}</td>
+      <td>
+        <div class="action-group">
+          <button class="btn-edit" onclick="editNews('${r.id}')"><img src="icon_pencil.svg" class="btn-svg-icon" alt=""> Sửa</button>
+          ${r.status==='published'
+            ? `<button class="btn-unpublish" onclick="toggleNewsStatus('${r.id}','draft')">📥 Gỡ</button>`
+            : `<button class="btn-publish" onclick="toggleNewsStatus('${r.id}','published')">🚀 Đăng</button>`
+          }
+          <button class="btn-danger" onclick="deleteNews('${r.id}')"><img src="icon_trashcan.svg" class="btn-svg-icon" alt=""></button>
+        </div>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function openNewsModal(data) {
+  const modal = document.getElementById('news-modal');
+  document.getElementById('news-modal-title').textContent = data ? 'Chỉnh Sửa Bài Viết' : 'Thêm Bài Viết Mới';
+  document.getElementById('nw-id').value       = data?.id || '';
+  document.getElementById('nw-title-vi').value = data?.title_vi || '';
+  document.getElementById('nw-title-en').value = data?.title_en || '';
+  document.getElementById('nw-excerpt-vi').value = data?.excerpt_vi || '';
+  document.getElementById('nw-excerpt-en').value = data?.excerpt_en || '';
+  document.getElementById('nw-tag').value      = data?.tag || 'Phân Tích';
+  document.getElementById('nw-date').value     = data?.published_date || new Date().toISOString().split('T')[0];
+  document.getElementById('nw-content-vi').value = data?.content_vi || '';
+  document.getElementById('nw-content-en').value = data?.content_en || '';
+  document.getElementById('nw-status').value      = data?.status || 'draft';
+  resetImageWidget('nw-img-preview','nw-img-placeholder','nw-image','nw-upload-status','nw-img-file');
+  if (data?.cover_image) {
+    restoreImagePreview(data.cover_image,'nw-img-preview','nw-img-placeholder');
+    document.getElementById('nw-image').value = data.cover_image;
+  }
+  modal.classList.add('open');
+}
+
+function closeNewsModal() {
+  document.getElementById('news-modal').classList.remove('open');
+}
+
+async function editNews(id) {
+  const { data } = await sb.from('news').select('*').eq('id', id).single();
+  if (data) openNewsModal(data);
+}
+
+async function saveNews() {
+  const id = document.getElementById('nw-id').value;
+  const title_vi = document.getElementById('nw-title-vi').value.trim();
+  if (!title_vi) { showToast('Vui lòng nhập tiêu đề tiếng Việt', 'error'); return; }
+  const payload = {
+    title_vi,
+    title_en:     document.getElementById('nw-title-en').value.trim() || null,
+    excerpt_vi:   document.getElementById('nw-excerpt-vi').value.trim() || null,
+    excerpt_en:   document.getElementById('nw-excerpt-en').value.trim() || null,
+    tag:          document.getElementById('nw-tag').value,
+    published_date: document.getElementById('nw-date').value || null,
+    cover_image:  document.getElementById('nw-image').value.trim() || null,
+    content_vi:   document.getElementById('nw-content-vi').value.trim() || null,
+    content_en:   document.getElementById('nw-content-en').value.trim() || null,
+    status:       document.getElementById('nw-status').value,
+  };
+  let error;
+  if (id) {
+    ({ error } = await sb.from('news').update(payload).eq('id', id));
+  } else {
+    ({ error } = await sb.from('news').insert([payload]));
+  }
+  if (error) { showToast('Lỗi: ' + error.message, 'error'); return; }
+  showToast(id ? 'Đã cập nhật bài viết ✓' : 'Đã thêm bài viết mới ✓', 'success');
+  closeNewsModal();
+  loadNews();
+}
+
+async function toggleNewsStatus(id, status) {
+  const { error } = await sb.from('news').update({ status }).eq('id', id);
+  if (error) { showToast('Lỗi: ' + error.message, 'error'); return; }
+  showToast(status === 'published' ? '🚀 Đã đăng bài viết!' : '📥 Đã gỡ bài viết', 'success');
+  loadNews();
+  loadDashboard();
+}
+
+async function deleteNews(id) {
+  if (!confirm('Xác nhận xóa bài viết này?')) return;
+  const { error } = await sb.from('news').delete().eq('id', id);
+  if (error) { showToast('Lỗi: ' + error.message, 'error'); return; }
+  showToast('Đã xóa bài viết', 'success');
+  loadNews();
+}
+
+// ════════════════════════════════
+//  DAILY NEWS
+// ════════════════════════════════
+async function loadDailyNewsAdmin() {
+  const tbody = document.getElementById('dnn-tbody');
+  if (!tbody) return;
+  tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:2rem"><span class="spinner"></span></td></tr>';
+  const { data, error } = await sb.from('daily_news').select('*').order('news_date', { ascending: false });
+  if (error) { tbody.innerHTML = '<tr><td colspan="5" style="color:#f87171;padding:1rem">Lỗi: ' + esc(error.message) + '</td></tr>'; return; }
+  if (!data || data.length === 0) { tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:2rem;color:#6b5e8a">Chưa có tin nào.</td></tr>'; return; }
+  tbody.innerHTML = data.map(function(r) {
+    var d = r.news_date ? new Date(r.news_date + 'T00:00:00') : null;
+    var dateStr = d ? ('0'+d.getDate()).slice(-2)+'/'+('0'+(d.getMonth()+1)).slice(-2)+'/'+d.getFullYear() : '—';
+    var statusBadge = r.status === 'published'
+      ? '<span style="color:#34d399;font-size:.75rem;font-weight:700">● Đã Đăng</span>'
+      : '<span style="color:#f59e0b;font-size:.75rem;font-weight:700">● Nháp</span>';
+    return '<tr>'
+      + '<td><img src="'+esc(r.image_url)+'" style="width:48px;height:48px;object-fit:cover;border-radius:6px;display:block"></td>'
+      + '<td style="max-width:260px"><div style="font-size:.85rem;color:#e2d9f3;line-height:1.3">'+esc(r.title)+'</div></td>'
+      + '<td style="white-space:nowrap;font-size:.82rem">'+dateStr+'</td>'
+      + '<td>'+statusBadge+'</td>'
+      + '<td style="white-space:nowrap">'
+        + '<button class="btn-secondary" style="padding:.3rem .6rem;font-size:.78rem;margin-right:.35rem" onclick="editDailyNews(\''+jsEsc(r.id)+'\')"><img src="icon_pencil.svg" class="btn-svg-icon" alt=""></button>'
+        + '<button class="btn-secondary" style="padding:.3rem .6rem;font-size:.78rem;color:#f87171;border-color:rgba(248,113,113,.3)" onclick="deleteDailyNews(\''+jsEsc(r.id)+'\')"><img src="icon_trashcan.svg" class="btn-svg-icon" alt=""></button>'
+      + '</td>'
+      + '</tr>';
+  }).join('');
+}
+
+function openDailyNewsModal(data) {
+  const modal = document.getElementById('daily-news-modal');
+  document.getElementById('dnn-modal-title').textContent = data ? 'Chỉnh Sửa Tin' : 'Thêm Tin Hằng Ngày';
+  document.getElementById('dnn-id').value          = data?.id || '';
+  document.getElementById('dnn-date').value        = data?.news_date || new Date().toISOString().split('T')[0];
+  document.getElementById('dnn-title').value       = data?.title || '';
+  document.getElementById('dnn-description').value = data?.description || '';
+  document.getElementById('dnn-source-url').value  = data?.source_url || '';
+  document.getElementById('dnn-status').value      = data?.status || 'published';
+  document.getElementById('dnn-image').value       = data?.image_url || '';
+  resetImageWidget('dnn-img-preview','dnn-img-placeholder','dnn-image','dnn-upload-status','dnn-img-file');
+  if (data?.image_url) restoreImagePreview(data.image_url,'dnn-img-preview','dnn-img-placeholder');
+  modal.classList.add('open');
+}
+
+function closeDailyNewsModal() {
+  document.getElementById('daily-news-modal').classList.remove('open');
+}
+
+async function editDailyNews(id) {
+  const { data } = await sb.from('daily_news').select('*').eq('id', id).single();
+  if (data) openDailyNewsModal(data);
+}
+
+async function saveDailyNews() {
+  const id        = document.getElementById('dnn-id').value;
+  const title     = document.getElementById('dnn-title').value.trim();
+  const image_url = document.getElementById('dnn-image').value.trim();
+  if (!title)     { showToast('Vui lòng nhập tiêu đề', 'error'); return; }
+  if (!image_url) { showToast('Vui lòng upload ảnh', 'error'); return; }
+  const payload = {
+    news_date:   document.getElementById('dnn-date').value || null,
+    title,
+    image_url,
+    description:  document.getElementById('dnn-description').value.trim() || null,
+    source_url:   document.getElementById('dnn-source-url').value.trim() || null,
+    status:       document.getElementById('dnn-status').value,
+  };
+  let error;
+  if (id) {
+    ({ error } = await sb.from('daily_news').update(payload).eq('id', id));
+  } else {
+    ({ error } = await sb.from('daily_news').insert([payload]));
+  }
+  if (error) { showToast('Lỗi: ' + error.message, 'error'); return; }
+  showToast(id ? 'Đã cập nhật tin ✓' : 'Đã thêm tin mới ✓', 'success');
+  closeDailyNewsModal();
+  loadDailyNewsAdmin();
+}
+
+async function deleteDailyNews(id) {
+  if (!confirm('Xác nhận xóa tin này?')) return;
+  const { error } = await sb.from('daily_news').delete().eq('id', id);
+  if (error) { showToast('Lỗi: ' + error.message, 'error'); return; }
+  showToast('Đã xóa tin ✓', 'success');
+  loadDailyNewsAdmin();
+}
+
+// ════════════════════════════════
+//  REVIEWS  (image-only, draft/published)
+// ════════════════════════════════
+async function loadReviews() {
+  const grid = document.getElementById('reviews-grid-admin');
+  if (!grid) return;
+  grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:2rem"><span class="spinner"></span></div>';
+  const { data, error } = await sb
+    .from('reviews')
+    .select('*')
+    .order('display_order', { ascending: false })
+    .order('created_at', { ascending: false });
+  if (error) {
+    grid.innerHTML = `<div style="grid-column:1/-1" class="empty"><p>⚠️ ${esc(error.message)}</p><p style="font-size:.8rem;color:var(--text2)">Hãy chạy file <code>supabase_reviews_setup.sql</code> trước.</p></div>`;
+    return;
+  }
+  if (!data || !data.length) {
+    grid.innerHTML = '<div style="grid-column:1/-1" class="empty"><div class="icon">⭐</div><p>Chưa có review nào. Bấm "Thêm Review" để bắt đầu.</p></div>';
+    return;
+  }
+  grid.innerHTML = data.map(r => `
+    <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(139,92,246,0.2);border-radius:12px;overflow:hidden;display:flex;flex-direction:column">
+      <div style="aspect-ratio:9/16;background:rgba(0,0,0,0.4);overflow:hidden;cursor:pointer" onclick="window.open('${esc(r.image_url)}','_blank')">
+        <img src="${esc(r.image_url)}" style="width:100%;height:100%;object-fit:cover;object-position:center top;display:block" alt="Review">
+      </div>
+      <div style="padding:.6rem .75rem;display:flex;justify-content:space-between;align-items:center;gap:.5rem;font-size:.78rem">
+        <span style="color:var(--text2)">#${r.display_order || 0}</span>
+        ${r.status === 'published'
+          ? '<span style="color:#34d399;font-weight:600">🌐 Đã đăng</span>'
+          : '<span style="color:#f59e0b;font-weight:600">📝 Nháp</span>'}
+      </div>
+      <div style="padding:0 .6rem .65rem;display:flex;gap:.3rem;flex-wrap:wrap">
+        <button class="btn-edit" style="font-size:.74rem;padding:.3rem .55rem" onclick="editReview('${r.id}')"><img src="icon_pencil.svg" class="btn-svg-icon" alt=""> Sửa</button>
+        ${r.status === 'published'
+          ? `<button class="btn-unpublish" style="font-size:.74rem;padding:.3rem .55rem" onclick="toggleReviewStatus('${r.id}','draft')">📥 Gỡ</button>`
+          : `<button class="btn-publish"   style="font-size:.74rem;padding:.3rem .55rem" onclick="toggleReviewStatus('${r.id}','published')">🚀 Đăng</button>`}
+        <button class="btn-danger" style="font-size:.74rem;padding:.3rem .55rem" onclick="deleteReview('${r.id}')"><img src="icon_trashcan.svg" class="btn-svg-icon" alt=""></button>
+      </div>
+    </div>`).join('');
+}
+
+function openReviewModal(data) {
+  document.getElementById('review-modal-title').textContent = data ? 'Chỉnh Sửa Review' : 'Thêm Review Mới';
+  document.getElementById('rv-id').value     = data?.id || '';
+  document.getElementById('rv-order').value  = data?.display_order ?? 0;
+  document.getElementById('rv-status').value = data?.status || 'draft';
+  document.getElementById('rv-image').value  = data?.image_url || '';
+  if (data?.image_url) {
+    restoreImagePreview(data.image_url, 'rv-img-preview', 'rv-img-placeholder');
+  } else {
+    resetImageWidget('rv-img-preview', 'rv-img-placeholder', 'rv-image', 'rv-upload-status', 'rv-img-file');
+  }
+  document.getElementById('review-modal').classList.add('open');
+}
+
+function closeReviewModal() {
+  document.getElementById('review-modal').classList.remove('open');
+  resetImageWidget('rv-img-preview', 'rv-img-placeholder', 'rv-image', 'rv-upload-status', 'rv-img-file');
+}
+
+async function editReview(id) {
+  const { data, error } = await sb.from('reviews').select('*').eq('id', id).single();
+  if (error) { showToast('Lỗi tải review', 'error'); return; }
+  openReviewModal(data);
+}
+
+async function saveReview() {
+  const id     = document.getElementById('rv-id').value;
+  const image  = (document.getElementById('rv-image').value || '').trim();
+  const order  = parseInt(document.getElementById('rv-order').value || 0, 10);
+  const status = document.getElementById('rv-status').value;
+  if (!image) { showToast('Vui lòng upload ảnh trước', 'error'); return; }
+  const payload = { image_url: image, display_order: isNaN(order) ? 0 : order, status };
+  const { error } = id
+    ? await sb.from('reviews').update(payload).eq('id', id)
+    : await sb.from('reviews').insert([payload]);
+  if (error) { showToast('Lỗi: ' + error.message, 'error'); return; }
+  showToast(id ? 'Đã cập nhật review' : 'Đã thêm review', 'success');
+  closeReviewModal();
+  loadReviews();
+}
+
+async function toggleReviewStatus(id, status) {
+  const { error } = await sb.from('reviews').update({ status }).eq('id', id);
+  if (error) { showToast('Lỗi: ' + error.message, 'error'); return; }
+  showToast(status === 'published' ? 'Review đã được đăng' : 'Đã gỡ review', 'success');
+  loadReviews();
+}
+
+async function deleteReview(id) {
+  if (!confirm('Xác nhận xóa review này?')) return;
+  const { error } = await sb.from('reviews').delete().eq('id', id);
+  if (error) { showToast('Lỗi: ' + error.message, 'error'); return; }
+  showToast('Đã xóa review', 'success');
+  loadReviews();
+}
+
+// ════════════════════════════════
+//  IMAGE UPLOAD (Supabase Storage)
+// ════════════════════════════════
+async function handleImageUpload(input, hiddenId, previewId, placeholderId, statusId) {
+  const file = input.files[0];
+  if (!file) return;
+  if (file.size > 5 * 1024 * 1024) { showToast('Ảnh quá lớn — tối đa 5MB', 'error'); return; }
+
+  const statusEl = document.getElementById(statusId);
+  statusEl.textContent = '⏳ Đang tải ảnh lên...';
+
+  const ext  = file.name.split('.').pop().toLowerCase();
+  const path = `uploads/${Date.now()}.${ext}`;
+
+  const { data, error } = await sb.storage
+    .from('media')
+    .upload(path, file, { cacheControl: '3600', upsert: true });
+
+  if (error) {
+    statusEl.textContent = '❌ Lỗi: ' + error.message;
+    showToast('Upload thất bại: ' + error.message, 'error');
+    return;
+  }
+
+  const { data: { publicUrl } } = sb.storage.from('media').getPublicUrl(path);
+
+  // Fill hidden input with URL
+  document.getElementById(hiddenId).value = publicUrl;
+
+  // Show preview
+  const preview = document.getElementById(previewId);
+  const placeholder = document.getElementById(placeholderId);
+  preview.src = publicUrl;
+  preview.style.display = 'block';
+  placeholder.style.display = 'none';
+
+  statusEl.innerHTML = '✅ Tải lên thành công! <a href="' + publicUrl + '" target="_blank" style="color:var(--purple2)">Xem ảnh</a>';
+  showToast('Ảnh đã tải lên thành công ✓', 'success');
+}
+
+function resetImageWidget(previewId, placeholderId, hiddenId, statusId, fileId) {
+  const preview = document.getElementById(previewId);
+  const placeholder = document.getElementById(placeholderId);
+  if (preview) { preview.src = ''; preview.style.display = 'none'; }
+  if (placeholder) placeholder.style.display = 'flex';
+  const hidden = document.getElementById(hiddenId);
+  if (hidden) hidden.value = '';
+  const status = document.getElementById(statusId);
+  if (status) status.textContent = '';
+  const file = document.getElementById(fileId);
+  if (file) file.value = '';
+}
+
+function restoreImagePreview(url, previewId, placeholderId) {
+  if (!url) return;
+  const preview = document.getElementById(previewId);
+  const placeholder = document.getElementById(placeholderId);
+  if (preview) { preview.src = url; preview.style.display = 'block'; }
+  if (placeholder) placeholder.style.display = 'none';
+}
+
+// ════════════════════════════════
+//  CHANGE PASSWORD
+// ════════════════════════════════
+async function changePassword() {
+  const np  = document.getElementById('cp-new').value;
+  const cnf = document.getElementById('cp-confirm').value;
+  if (!np || np.length < 6) { showToast('Mật khẩu tối thiểu 6 ký tự', 'error'); return; }
+  if (np !== cnf) { showToast('Mật khẩu xác nhận không khớp', 'error'); return; }
+  const { error } = await sb.auth.updateUser({ password: np });
+  if (error) { showToast('Lỗi: ' + error.message, 'error'); return; }
+  document.getElementById('cp-new').value    = '';
+  document.getElementById('cp-confirm').value = '';
+  showToast('✅ Mật khẩu đã được cập nhật!', 'success');
+}
+
+// ════════════════════════════════
+//  HELPERS
+// ════════════════════════════════
+function esc(s) {
+  return String(s ?? '')
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;')
+    .replace(/'/g,'&#39;');
+}
+// Use inside `onclick="x('${jsEsc(value)}')"` — escapes for JS string literal
+// inside an HTML attribute (so apostrophes/quotes in user data can't break out).
+function jsEsc(s) {
+  return String(s ?? '')
+    .replace(/\\/g, '\\\\')
+    .replace(/'/g,  "\\'")
+    .replace(/"/g,  '\\"')
+    .replace(/</g,  '\\x3c')
+    .replace(/>/g,  '\\x3e')
+    .replace(/\r?\n/g, '\\n');
+}
+function fmtDate(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  return d.toLocaleDateString('vi-VN', { day:'2-digit', month:'2-digit', year:'numeric' });
+}
+function fmtDateShort(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  return d.toLocaleDateString('vi-VN', { day:'2-digit', month:'2-digit', year:'numeric' });
+}
+
+let toastTimer = null;
+function showToast(msg, type = 'success') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast ' + type + ' show';
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { t.classList.remove('show'); }, 3000);
+}
+
+// ════════════════════════════════
+//  PERFORMANCE
+// ════════════════════════════════
+let perfParsedRows = [];
+// Accordion state: which months are expanded, and cached trade data per month
+const _openMonths  = new Set();
+const _monthCache  = new Map();
+
+// Generate a safe DOM-id from a month label (e.g. "THÁNG 03/2026" → "pm_TH_NG_03_2026")
+function perfMId(label) { return 'pm_' + label.replace(/[^a-zA-Z0-9]/g, '_'); }
+
+function togglePerfImportForm() {
+  const f = document.getElementById('perf-import-form');
+  f.style.display = f.style.display === 'none' ? 'block' : 'none';
+  document.getElementById('perf-preview').style.display = 'none';
+}
+
+async function loadPerformancePage() {
+  await loadPerformanceData();
+}
+
+// ── Build and render the full accordion list ─────────────────────────────────
+async function loadPerformanceData() {
+  const accordion = document.getElementById('perf-accordion');
+  accordion.innerHTML = '<div style="text-align:center;padding:2rem"><span class="spinner"></span></div>';
+
+  const { data: monthRows, error } = await sb
+    .from('performance_trades')
+    .select('month_label')
+    .order('month_label', { ascending: false });
+
+  if (error) {
+    accordion.innerHTML = `<div class="empty"><div class="icon">⚠️</div>
+      <p style="color:#f87171">Lỗi kết nối DB: ${error.message}</p>
+      <p style="font-size:.78rem;color:#6b5e8a;margin-top:.4rem">Kiểm tra bảng <strong>performance_trades</strong> đã tồn tại trong Supabase chưa.</p></div>`;
+    return;
+  }
+
+  const uniqueMonths = [...new Set((monthRows || []).map(r => r.month_label))];
+
+  if (!uniqueMonths.length) {
+    accordion.innerHTML = '<div class="empty"><div class="icon">📊</div><p>Chưa có dữ liệu. Import Excel để bắt đầu.</p></div>';
+    return;
+  }
+
+  // Auto-open most recent month if nothing open; remove stale months
+  if (_openMonths.size === 0) _openMonths.add(uniqueMonths[0]);
+  [..._openMonths].forEach(m => { if (!uniqueMonths.includes(m)) _openMonths.delete(m); });
+
+  accordion.innerHTML = uniqueMonths.map(m => buildMonthAccordion(m)).join('');
+
+  // Load data for all currently-open months
+  for (const m of uniqueMonths) {
+    if (_openMonths.has(m)) await loadMonthData(m);
+  }
+}
+
+// ── Build one accordion card (header + collapsible body) ──────────────────────
+function buildMonthAccordion(label) {
+  const mid = perfMId(label);
+  const isOpen = _openMonths.has(label);
+  const safeLabel = label.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+  return `
+  <div style="margin-bottom:.75rem;border:1px solid rgba(139,92,246,0.2);border-radius:12px;overflow:hidden">
+    <div onclick="togglePerfMonth('${safeLabel}')"
+         style="display:flex;justify-content:space-between;align-items:center;padding:.85rem 1.1rem;
+                background:rgba(139,92,246,0.08);cursor:pointer;user-select:none">
+      <span style="font-size:.9rem;font-weight:700;color:#a78bfa;letter-spacing:.5px">${label}</span>
+      <div style="display:flex;align-items:center;gap:.85rem">
+        <span id="${mid}-summary" style="font-size:.78rem;color:#6b5e8a"></span>
+        <span id="${mid}-chevron" style="font-size:.85rem;color:#6b5e8a">${isOpen ? '▲' : '▼'}</span>
+      </div>
+    </div>
+    <div id="${mid}-body" style="display:${isOpen ? 'block' : 'none'};padding:1rem">
+      <div id="${mid}-stats"
+           style="display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:.65rem;margin-bottom:1rem">
+        <div style="text-align:center;padding:1rem"><span class="spinner"></span></div>
+      </div>
+      <div class="table-wrap table-scroll" style="max-height:380px;overflow-y:auto">
+        <table>
+          <thead>
+            <tr><th>#</th><th>Ngày</th><th>Cặp GD</th><th>Kết Quả</th><th>Lợi Nhuận (%)</th><th>Thao Tác</th></tr>
+          </thead>
+          <tbody id="${mid}-tbody">
+            <tr><td colspan="6" style="text-align:center;padding:1.5rem"><span class="spinner"></span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div style="margin-top:.75rem;text-align:right">
+        <button class="btn-danger" onclick="deletePerfMonth('${safeLabel}')" style="font-size:.82rem"><img src="icon_trashcan.svg" class="btn-svg-icon" alt=""> Xóa Tháng Này</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ── Toggle open/closed for one month ─────────────────────────────────────────
+async function togglePerfMonth(label) {
+  const mid = perfMId(label);
+  const body    = document.getElementById(`${mid}-body`);
+  const chevron = document.getElementById(`${mid}-chevron`);
+  if (_openMonths.has(label)) {
+    _openMonths.delete(label);
+    if (body)    body.style.display = 'none';
+    if (chevron) chevron.textContent = '▼';
+  } else {
+    _openMonths.add(label);
+    if (body)    body.style.display = 'block';
+    if (chevron) chevron.textContent = '▲';
+    if (!_monthCache.has(label)) await loadMonthData(label);
+  }
+}
+
+// ── Load & render trades for one month ───────────────────────────────────────
+async function loadMonthData(label) {
+  const mid     = perfMId(label);
+  const statsEl = document.getElementById(`${mid}-stats`);
+  const tbody   = document.getElementById(`${mid}-tbody`);
+  const summaryEl = document.getElementById(`${mid}-summary`);
+
+  const { data, error } = await sb
+    .from('performance_trades')
+    .select('*')
+    .eq('month_label', label)
+    .order('created_at', { ascending: true });
+
+  if (error) {
+    if (statsEl) statsEl.innerHTML = '';
+    if (tbody)   tbody.innerHTML = `<tr><td colspan="6" class="empty"><p style="color:#f87171">Lỗi: ${error.message}</p></td></tr>`;
+    return;
+  }
+
+  _monthCache.set(label, data || []);
+
+  if (!data?.length) {
+    if (statsEl)   statsEl.innerHTML = '';
+    if (tbody)     tbody.innerHTML = '<tr><td colspan="6" class="empty"><p>Không có dữ liệu cho tháng này</p></td></tr>';
+    if (summaryEl) summaryEl.textContent = 'Trống';
+    return;
+  }
+
+  renderMonthTrades(label, data);
+}
+
+function renderMonthTrades(label, data) {
+  const mid       = perfMId(label);
+  const statsEl   = document.getElementById(`${mid}-stats`);
+  const tbody     = document.getElementById(`${mid}-tbody`);
+  const summaryEl = document.getElementById(`${mid}-summary`);
+
+  const wins      = data.filter(r => r.result === 'THẮNG').length;
+  const losses    = data.filter(r => r.result === 'THUA').length;
+  const draws     = data.filter(r => r.result === 'HÒA').length;
+  const winrate   = (wins + losses) > 0 ? (wins / (wins + losses) * 100).toFixed(1) : '0.0';
+  const totalPnl  = data.reduce((s, r) => s + parseFloat(r.pnl || 0), 0);
+  const pnlColor  = totalPnl >= 0 ? '#34d399' : '#f87171';
+  const pnlSign   = totalPnl >= 0 ? '+' : '';
+
+  if (summaryEl) summaryEl.textContent = `${wins}W ${losses}L · WR: ${winrate}% · PnL: ${pnlSign}${totalPnl.toFixed(2)}%`;
+
+  if (statsEl) statsEl.innerHTML = `
+    <div style="background:rgba(52,211,153,0.08);border:1px solid rgba(52,211,153,0.2);border-radius:10px;padding:.75rem;text-align:center">
+      <div style="font-size:1.4rem;font-weight:800;color:#34d399">${wins}</div>
+      <div style="font-size:.7rem;color:#6b5e8a;text-transform:uppercase;margin-top:.2rem">Thắng</div>
+    </div>
+    <div style="background:rgba(248,113,113,0.08);border:1px solid rgba(248,113,113,0.2);border-radius:10px;padding:.75rem;text-align:center">
+      <div style="font-size:1.4rem;font-weight:800;color:#f87171">${losses}</div>
+      <div style="font-size:.7rem;color:#6b5e8a;text-transform:uppercase;margin-top:.2rem">Thua</div>
+    </div>
+    <div style="background:rgba(96,165,250,0.08);border:1px solid rgba(96,165,250,0.2);border-radius:10px;padding:.75rem;text-align:center">
+      <div style="font-size:1.4rem;font-weight:800;color:#60a5fa">${draws}</div>
+      <div style="font-size:.7rem;color:#6b5e8a;text-transform:uppercase;margin-top:.2rem">Hoà</div>
+    </div>
+    <div style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.2);border-radius:10px;padding:.75rem;text-align:center">
+      <div style="font-size:1.4rem;font-weight:800;color:#f59e0b">${winrate}%</div>
+      <div style="font-size:.7rem;color:#6b5e8a;text-transform:uppercase;margin-top:.2rem">Winrate</div>
+    </div>
+    <div style="background:rgba(139,92,246,0.08);border:1px solid rgba(139,92,246,0.2);border-radius:10px;padding:.75rem;text-align:center">
+      <div style="font-size:1.4rem;font-weight:800;color:${pnlColor}">${pnlSign}${totalPnl.toFixed(2)}%</div>
+      <div style="font-size:.7rem;color:#6b5e8a;text-transform:uppercase;margin-top:.2rem">Tổng PnL</div>
+    </div>`;
+
+  const resultBadge = r =>
+    r === 'THẮNG' ? '<span class="badge badge-green">THẮNG</span>' :
+    r === 'THUA'  ? '<span class="badge badge-red">THUA</span>'  :
+                    '<span class="badge badge-gray">HÒA</span>';
+
+  if (tbody) tbody.innerHTML = data.map((r, i) => {
+    const p = parseFloat(r.pnl || 0);
+    return `<tr>
+      <td style="color:var(--text3)">${i + 1}</td>
+      <td style="font-size:.85rem">${esc(r.trade_date || '—')}</td>
+      <td style="font-weight:600">${esc(r.asset)}</td>
+      <td>${resultBadge(r.result)}</td>
+      <td style="font-weight:700;color:${p >= 0 ? '#34d399' : '#f87171'}">${p >= 0 ? '+' : ''}${p.toFixed(2)}%</td>
+      <td style="display:flex;gap:.3rem;align-items:center">
+        <button onclick="openEditTrade('${r.id}','${jsEsc(label)}','${jsEsc(r.trade_date||'')}','${jsEsc(r.asset)}','${jsEsc(r.result)}',${parseFloat(r.pnl||0)})"
+          style="background:rgba(96,165,250,0.1);border:1px solid rgba(96,165,250,0.25);border-radius:6px;color:#60a5fa;padding:.2rem .5rem;font-size:.8rem;cursor:pointer"><img src="icon_pencil.svg" class="btn-svg-icon" alt=""></button>
+        <button class="btn-danger" onclick="deletePerfTrade('${r.id}','${jsEsc(label)}')"><img src="icon_trashcan.svg" class="btn-svg-icon" alt=""></button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+// ── Delete a single trade row ─────────────────────────────────────────────────
+async function deletePerfTrade(id, label) {
+  if (!confirm('Xóa lệnh này?')) return;
+  const { error } = await sb.from('performance_trades').delete().eq('id', id);
+  if (error) { showToast('Lỗi xóa lệnh: ' + error.message, 'error'); return; }
+  _monthCache.delete(label);
+  await loadMonthData(label);
+}
+
+// ── Delete an entire month ────────────────────────────────────────────────────
+async function deletePerfMonth(label) {
+  if (!confirm(`Xóa toàn bộ dữ liệu tháng "${label}"?`)) return;
+  const { error } = await sb.from('performance_trades').delete().eq('month_label', label);
+  if (error) { showToast('Lỗi: ' + error.message, 'error'); return; }
+  _monthCache.delete(label);
+  _openMonths.delete(label);
+  showToast('Đã xóa tháng ' + label, 'success');
+  await loadPerformanceData();
+}
+
+function openEditTrade(id, monthLabel, date, asset, result, pnl) {
+  document.getElementById('et-id').value     = id;
+  document.getElementById('et-label').value  = monthLabel || '';
+  document.getElementById('et-date').value   = date || '';
+  document.getElementById('et-asset').value  = asset || '';
+  document.getElementById('et-result').value = result || 'THẮNG';
+  document.getElementById('et-pnl').value    = pnl != null ? pnl : '';
+  document.getElementById('edit-trade-modal').classList.add('open');
+}
+
+function closeEditTradeModal() {
+  document.getElementById('edit-trade-modal').classList.remove('open');
+}
+
+async function saveEditTrade() {
+  const id     = document.getElementById('et-id').value;
+  const label  = document.getElementById('et-label').value;
+  const date   = document.getElementById('et-date').value.trim() || null;
+  const asset  = document.getElementById('et-asset').value.trim();
+  const result = document.getElementById('et-result').value;
+  const pnl    = parseFloat(document.getElementById('et-pnl').value) || 0;
+
+  if (!asset) { showToast('Vui lòng nhập Cặp / Tài Sản', 'error'); return; }
+
+  const btn = document.querySelector('#edit-trade-modal .btn-primary');
+  btn.disabled = true; btn.textContent = '⏳ Đang lưu...';
+
+  const { error } = await sb
+    .from('performance_trades')
+    .update({ trade_date: date, asset, result, pnl })
+    .eq('id', id);
+
+  btn.disabled = false; btn.innerHTML = '<img src="icon_save.svg" class="btn-svg-icon" alt=""> Lưu Thay Đổi';
+
+  if (error) { showToast('Lỗi: ' + error.message, 'error'); return; }
+  showToast('Đã cập nhật lệnh thành công', 'success');
+  closeEditTradeModal();
+  // Update cache in-place (preserve row order) then re-render from cache
+  const cached = _monthCache.get(label) || [];
+  const idx = cached.findIndex(r => String(r.id) === String(id));
+  if (idx !== -1) {
+    cached[idx] = { ...cached[idx], trade_date: date, asset, result, pnl };
+    _monthCache.set(label, cached);
+    renderMonthTrades(label, cached);
+  } else {
+    _monthCache.delete(label);
+    await loadMonthData(label);
+  }
+}
+
+// ── Excel Import ──
+// Called when user picks a file — detect sheets and update UI
+function onPerfFileChange(input) {
+  // Reset preview state WITHOUT clearing the file input itself
+  document.getElementById('perf-preview').style.display = 'none';
+  perfParsedRows = [];
+  document.getElementById('perf-label-wrap').style.display = '';
+  document.getElementById('perf-sheet-wrap').style.display = 'none';
+  document.getElementById('perf-sheet-hint').style.display = 'none';
+  const sel = document.getElementById('perf-sheet-select');
+  if (sel) sel.innerHTML = '';
+
+  if (!input.files[0]) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
+      const isMulti = wb.SheetNames.length > 1;
+      document.getElementById('perf-label-wrap').style.display  = isMulti ? 'none' : '';
+      document.getElementById('perf-sheet-wrap').style.display  = isMulti ? ''     : 'none';
+      document.getElementById('perf-sheet-hint').style.display  = isMulti ? ''     : 'none';
+      if (isMulti) {
+        const sel = document.getElementById('perf-sheet-select');
+        sel.innerHTML = wb.SheetNames.map(n => `<option value="${esc(n)}">${esc(n)}</option>`).join('');
+      }
+    } catch(e) {}
+  };
+  reader.readAsArrayBuffer(input.files[0]);
+}
+
+function parseAndPreviewExcel() {
+  const fileInput = document.getElementById('perf-file');
+  if (!fileInput.files[0]) { showToast('Vui lòng chọn file Excel', 'error'); return; }
+
+  const isMulti  = document.getElementById('perf-sheet-wrap').style.display !== 'none';
+  const label    = isMulti
+    ? document.getElementById('perf-sheet-select').value.trim()
+    : document.getElementById('perf-label').value.trim();
+
+  if (!label) { showToast('Vui lòng nhập nhãn tháng', 'error'); return; }
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const wb       = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
+      const sheetKey = isMulti ? label : wb.SheetNames[0];
+      const ws       = wb.Sheets[sheetKey];
+      if (!ws) { showToast('Không tìm thấy sheet: ' + label, 'error'); return; }
+      const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+      perfParsedRows = parseExcelTrades(rows, label);
+      if (!perfParsedRows.length) {
+        showToast('Không tìm thấy lệnh hợp lệ trong sheet này', 'error'); return;
+      }
+      renderPerfPreview(perfParsedRows, `"${label}"`);
+    } catch(err) {
+      showToast('Lỗi đọc file: ' + err.message, 'error');
+    }
+  };
+  reader.readAsArrayBuffer(fileInput.files[0]);
+}
+
+function renderPerfPreview(rows, infoText) {
+  const tbody = document.getElementById('perf-preview-tbody');
+  const resultBadge = r =>
+    r === 'THẮNG' ? '<span class="badge badge-green">THẮNG</span>' :
+    r === 'THUA'  ? '<span class="badge badge-red">THUA</span>' :
+                    '<span class="badge badge-gray">HÒA</span>';
+  tbody.innerHTML = rows.map((r, i) =>
+    `<tr>
+      <td>${i + 1}</td>
+      <td>${esc(r.trade_date || '—')}</td>
+      <td>${esc(r.asset)}</td>
+      <td>${resultBadge(r.result)}</td>
+      <td style="color:${r.pnl >= 0 ? '#34d399' : '#f87171'}">${r.pnl >= 0 ? '+' : ''}${r.pnl.toFixed(2)}%</td>
+    </tr>`).join('');
+  document.getElementById('perf-preview-info').textContent =
+    `✅ Tìm thấy ${rows.length} lệnh · Nhãn: ${infoText}`;
+  document.getElementById('perf-preview').style.display = 'block';
+}
+
+function parseExcelTrades(rows, label) {
+  // ── Auto-detect decimal vs integer PnL format ──
+  // Sample all numeric cells in typical PnL column positions
+  const pnlSamples = [];
+  for (const row of rows) {
+    for (const ci of [4, 10, 16]) {
+      const v = row[ci];
+      if (v !== '' && v !== null && v !== undefined && !isNaN(Number(v))) {
+        pnlSamples.push(Math.abs(Number(v)));
+      }
+    }
+  }
+  const nonZero = pnlSamples.filter(v => v > 0);
+  // If majority of nonzero values are < 1.5, it's decimal format (0.03 = 3%)
+  const isDecimal = nonZero.length > 0 &&
+    nonZero.filter(v => v < 1.5).length > nonZero.length * 0.6;
+
+  const resultNorm = raw => {
+    const s = String(raw || '').trim().toUpperCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    if (s.includes('THANG') || s.includes('WIN') || s === 'W' || s === '1') return 'THẮNG';
+    if (s.includes('THUA') || s.includes('LOSS') || s === 'L' || s === '0') return 'THUA';
+    if (s.includes('HOA') || s.includes('DRAW') || s === 'BE') return 'HÒA';
+    return null;
+  };
+
+  const parsePnl = raw => {
+    if (raw === '' || raw === null || raw === undefined) return 0;
+    let n = parseFloat(String(raw).trim().replace(',', '.').replace('%', ''));
+    if (isNaN(n)) return 0;
+    if (isDecimal && Math.abs(n) > 0) n = Math.round(n * 10000) / 100;
+    else n = Math.round(n * 100) / 100;
+    return n;
+  };
+
+  // Extract year from label (e.g. "tháng 04/2026" → "2026")
+  const yearMatch = label.match(/(\d{4})/);
+  const labelYear = yearMatch ? yearMatch[1] : new Date().getFullYear();
+
+  const parseDate = raw => {
+    if (typeof raw === 'number' && raw > 10000) {
+      // Excel serial date → dd/mm/yyyy
+      const d = new Date(Math.round((raw - 25569) * 86400000));
+      return ('0'+d.getUTCDate()).slice(-2)+'/'+('0'+(d.getUTCMonth()+1)).slice(-2)+'/'+d.getUTCFullYear();
+    }
+    const s = String(raw || '').trim();
+    // dd/mm format → append year from label
+    if (/^\d{1,2}\/\d{1,2}$/.test(s)) return s + '/' + labelYear;
+    return s;
+  };
+
+  const trades = [];
+  // 2 side-by-side blocks (A-E and F-J)
+  const OFFSETS = [0, 5];
+  for (const row of rows) {
+    for (const off of OFFSETS) {
+      const stt  = row[off + 0];
+      const date = parseDate(row[off + 1]);
+      const asset= String(row[off + 2] || '').trim();
+      const res  = resultNorm(row[off + 3]);
+      const pnl  = parsePnl(row[off + 4]);
+      // Valid row: STT is a number, asset is non-empty, result is known
+      if (stt !== '' && !isNaN(Number(stt)) && Number(stt) > 0 && asset && res) {
+        trades.push({ month_label: label, trade_date: date || null, asset, result: res, pnl });
+      }
+    }
+  }
+  return trades;
+}
+
+function cancelPerfImport() {
+  document.getElementById('perf-preview').style.display = 'none';
+  perfParsedRows = [];
+  // reset sheet selector UI
+  document.getElementById('perf-label-wrap').style.display = '';
+  document.getElementById('perf-sheet-wrap').style.display = 'none';
+  document.getElementById('perf-sheet-hint').style.display = 'none';
+  const sel = document.getElementById('perf-sheet-select');
+  if (sel) sel.innerHTML = '';
+  // clear file input so user can re-select same file
+  const fi = document.getElementById('perf-file-input');
+  if (fi) fi.value = '';
+}
+
+async function confirmPerfImport() {
+  if (!perfParsedRows.length) return;
+  const btn = document.getElementById('perf-confirm-btn');
+  const importedLabel = perfParsedRows[0].month_label;
+
+  // Check for existing data with same month_label
+  const { data: existing } = await sb
+    .from('performance_trades')
+    .select('id')
+    .eq('month_label', importedLabel)
+    .limit(1);
+
+  if (existing && existing.length > 0) {
+    const overwrite = confirm(`Tháng "${importedLabel}" đã có dữ liệu trong hệ thống.\n\nBạn có muốn XÓA dữ liệu cũ và import lại không?\n\n✅ OK = Xóa và import lại\n❌ Cancel = Giữ nguyên`);
+    if (!overwrite) return;
+    // Delete existing month data first
+    const { error: delErr } = await sb.from('performance_trades').delete().eq('month_label', importedLabel);
+    if (delErr) { showToast('Lỗi xóa dữ liệu cũ: ' + delErr.message, 'error'); return; }
+  }
+
+  btn.textContent = '⏳ Đang import...';
+  btn.disabled = true;
+
+  // Insert in batches of 200
+  const BATCH = 200;
+  let err = null;
+  for (let i = 0; i < perfParsedRows.length; i += BATCH) {
+    const { error } = await sb.from('performance_trades').insert(perfParsedRows.slice(i, i + BATCH));
+    if (error) { err = error; break; }
+  }
+
+  btn.innerHTML = '<img src="icon_save.svg" class="btn-svg-icon" alt=""> Xác Nhận Import';
+  btn.disabled = false;
+
+  if (err) { showToast('Lỗi import: ' + err.message, 'error'); return; }
+
+  showToast(`✅ Import ${perfParsedRows.length} lệnh thành công!`, 'success');
+  document.getElementById('perf-preview').style.display  = 'none';
+  document.getElementById('perf-import-form').style.display = 'none';
+  document.getElementById('perf-label').value = '';
+  document.getElementById('perf-file').value  = '';
+  perfParsedRows = [];
+  // Auto-expand the newly imported month
+  _openMonths.add(importedLabel);
+  _monthCache.delete(importedLabel);
+  await loadPerformanceData();
+}
+
+// ── Close modals on overlay click
+document.getElementById('event-modal').addEventListener('click', e => {
+  if (e.target === e.currentTarget) closeEventModal();
+});
+document.getElementById('news-modal').addEventListener('click', e => {
+  if (e.target === e.currentTarget) closeNewsModal();
+});
+document.getElementById('edit-trade-modal').addEventListener('click', e => {
+  if (e.target === e.currentTarget) closeEditTradeModal();
+});
+document.getElementById('daily-news-modal').addEventListener('click', e => {
+  if (e.target === e.currentTarget) closeDailyNewsModal();
+});
+
+// Listen for auth state changes (e.g. token refresh, sign-out from another tab)
+sb.auth.onAuthStateChange((event, session) => {
+  if (event === 'SIGNED_OUT') {
+    document.getElementById('app').style.display = 'none';
+    document.getElementById('login-screen').style.display = 'flex';
+  }
+});
+
+  // ===== COMMENTS PAGE =====
+  async function loadCommentsPage() {
+    await loadAdminComments();
+  }
+
+  // ===== MACRO EVENTS PAGE =====
+  async function loadMacroPage() {
+    await loadAdminMacroEvents();
+  }
+
+  // Legacy alias (kept for safety)
+  async function loadCommunityPage() {
+    await Promise.all([loadAdminComments(), loadAdminMacroEvents()]);
+  }
+
+  // ── Comments ──
+  async function loadAdminComments() {
+    const el = document.getElementById('admin-comments-list');
+    if (!el) return;
+    const { data } = await sb.from('comments').select('*').order('created_at', { ascending: false });
+    const countEl = document.getElementById('comments-count');
+    if (countEl) countEl.textContent = data ? `${data.length} bình luận` : '';
+    if (!data || data.length === 0) { el.innerHTML = '<p style="color:#6b5e8a;font-size:.85rem">Chưa có bình luận nào.</p>'; return; }
+    el.innerHTML = data.map(c => `
+      <div style="background:rgba(255,255,255,0.03);border-radius:10px;padding:.85rem 1rem;margin-bottom:.6rem;display:flex;justify-content:space-between;align-items:flex-start;gap:1rem">
+        <div style="flex:1;min-width:0">
+          <div style="font-size:.8rem;font-weight:700;color:#a78bfa;margin-bottom:.2rem">👤 ${esc(c.author_name)} <span style="color:#6b5e8a;font-weight:400;font-size:.73rem">· ${new Date(c.created_at).toLocaleString('vi-VN')} · ${esc(c.article_type)}</span></div>
+          <div style="font-size:.87rem;color:#b8aad4;line-height:1.5;white-space:pre-wrap">${esc(c.content)}</div>
+          <div style="display:flex;gap:.35rem;margin-top:.4rem">
+            ${c.is_approved
+              ? `<button onclick="toggleComment('${c.id}',false)" style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.25);border-radius:6px;color:#f59e0b;font-size:.72rem;padding:.2rem .55rem;cursor:pointer">Ẩn</button>`
+              : `<button onclick="toggleComment('${c.id}',true)" style="background:rgba(52,211,153,0.1);border:1px solid rgba(52,211,153,0.25);border-radius:6px;color:#34d399;font-size:.72rem;padding:.2rem .55rem;cursor:pointer">Hiện</button>`}
+            <button onclick="deleteComment('${c.id}')" style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.25);border-radius:6px;color:#f87171;font-size:.72rem;padding:.2rem .55rem;cursor:pointer">Xóa</button>
+          </div>
+        </div>
+        <span style="font-size:.7rem;padding:.2rem .55rem;border-radius:99px;flex-shrink:0;background:${c.is_approved ? 'rgba(52,211,153,0.12)' : 'rgba(239,68,68,0.12)'};color:${c.is_approved ? '#34d399' : '#f87171'}">${c.is_approved ? 'Hiển thị' : 'Ẩn'}</span>
+      </div>`).join('');
+  }
+
+  async function toggleComment(id, approved) {
+    await sb.from('comments').update({ is_approved: approved }).eq('id', id);
+    await loadAdminComments();
+  }
+
+  async function deleteComment(id) {
+    if (!confirm('Xóa bình luận này?')) return;
+    await sb.from('comments').delete().eq('id', id);
+    await loadAdminComments();
+  }
+
+
+  // ===== MACRO EVENTS =====
+  function toggleMacroAddForm() {
+    const f = document.getElementById('macro-add-form');
+    if (!f) return;
+    if (f.style.display === 'none' || !f.style.display) {
+      // Open in fresh "Add" mode (reset any leftover edit state)
+      cancelMacroEdit();
+      f.style.display = 'block';
+    } else {
+      f.style.display = 'none';
+    }
+  }
+
+  async function addMacroEventManual() {
+    const id      = document.getElementById('me-id').value;
+    const name    = document.getElementById('me-name').value.trim();
+    const dateVal = document.getElementById('me-date').value;
+    const impact  = document.getElementById('me-impact').value;
+    if (!name || !dateVal) { alert('Vui lòng nhập tên sự kiện và ngày giờ.'); return; }
+
+    const d = new Date(dateVal);
+    const monthYear = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+    const row = {
+      event_name:  name,
+      event_date:  d.toISOString(),
+      country:     'US',
+      impact,
+      forecast:    document.getElementById('me-forecast').value.trim() || null,
+      actual:      document.getElementById('me-actual').value.trim()   || null,
+      previous:    document.getElementById('me-previous').value.trim() || null,
+      article_url: document.getElementById('me-url').value.trim()      || null,
+      month_year:  monthYear
+    };
+
+    const { error } = id
+      ? await sb.from('macro_events').update(row).eq('id', id)
+      : await sb.from('macro_events').insert(row);
+
+    const st = document.getElementById('me-status');
+    if (error) {
+      st.style.cssText = 'font-size:.78rem;margin:.5rem 0 0;color:#f87171;display:block';
+      st.textContent = '❌ Lỗi: ' + error.message;
+    } else {
+      st.style.cssText = 'font-size:.78rem;margin:.5rem 0 0;color:#34d399;display:block';
+      st.textContent = id ? '✅ Đã cập nhật sự kiện!' : '✅ Đã thêm sự kiện!';
+      cancelMacroEdit();
+      await loadAdminMacroEvents();
+    }
+  }
+
+  async function editMacroEvent(id) {
+    const { data, error } = await sb.from('macro_events').select('*').eq('id', id).single();
+    if (error || !data) { alert('Không tải được sự kiện'); return; }
+    // Show form
+    const f = document.getElementById('macro-add-form');
+    if (f) f.style.display = 'block';
+    // Fill form
+    document.getElementById('me-id').value       = data.id;
+    document.getElementById('me-name').value     = data.event_name || '';
+    // Convert UTC ISO to local datetime-local format (YYYY-MM-DDTHH:mm)
+    if (data.event_date) {
+      const dt = new Date(data.event_date);
+      const tz = dt.getTimezoneOffset() * 60000;
+      const local = new Date(dt.getTime() - tz).toISOString().slice(0, 16);
+      document.getElementById('me-date').value = local;
+    }
+    document.getElementById('me-impact').value   = data.impact || 'Medium';
+    document.getElementById('me-forecast').value = data.forecast === 'null' ? '' : (data.forecast || '');
+    document.getElementById('me-actual').value   = data.actual   === 'null' ? '' : (data.actual   || '');
+    document.getElementById('me-previous').value = data.previous === 'null' ? '' : (data.previous || '');
+    document.getElementById('me-url').value      = data.article_url === 'null' ? '' : (data.article_url || '');
+    // Update title + button
+    document.getElementById('me-form-title').textContent = '✏️ Chỉnh Sửa Sự Kiện';
+    document.getElementById('me-save-btn').innerHTML     = '<img src="icon_save.svg" class="btn-svg-icon" alt=""> Cập Nhật';
+    // Scroll into view + clear status
+    f.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    const st = document.getElementById('me-status');
+    if (st) st.style.display = 'none';
+  }
+
+  function cancelMacroEdit() {
+    // Hide form + reset to default "add" mode
+    const f = document.getElementById('macro-add-form');
+    if (f) f.style.display = 'none';
+    document.getElementById('me-id').value       = '';
+    ['me-name','me-forecast','me-actual','me-previous','me-url'].forEach(id => {
+      const el = document.getElementById(id); if (el) el.value = '';
+    });
+    document.getElementById('me-date').value     = '';
+    document.getElementById('me-impact').value   = 'Medium';
+    document.getElementById('me-form-title').textContent = 'Thêm Sự Kiện Mới';
+    document.getElementById('me-save-btn').innerHTML     = '<img src="icon_save.svg" class="btn-svg-icon" alt=""> Lưu Sự Kiện';
+    const st = document.getElementById('me-status');
+    if (st) st.style.display = 'none';
+  }
+
+  async function loadAdminMacroEvents() {
+    const el = document.getElementById('admin-macro-list');
+    if (!el) return;
+    const { data } = await sb.from('macro_events').select('*').order('event_date', { ascending: false }).limit(30);
+    if (!data || data.length === 0) { el.innerHTML = '<p style="color:#6b5e8a;font-size:.85rem">Chưa có dữ liệu. Bấm Sync.</p>'; return; }
+    const impactColor = { High: '#f87171', Medium: '#f59e0b', Low: '#34d399' };
+    el.innerHTML = data.map(e => {
+      const isPast = new Date(e.event_date) < new Date();
+      const d = new Date(e.event_date);
+      const dateStr = d.toLocaleString('vi-VN', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' });
+      return `<div style="background:rgba(255,255,255,0.03);border-radius:9px;padding:.75rem 1rem;margin-bottom:.5rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.5rem;opacity:${isPast?'0.6':'1'}">
+        <div style="flex:1;min-width:0">
+          <div style="font-size:.85rem;font-weight:700;color:#e2d9f3;margin-bottom:.2rem">${e.event_name}</div>
+          <div style="font-size:.75rem;color:#6b5e8a">${dateStr} · Dự báo: ${e.forecast||'—'} · Thực tế: ${e.actual||'—'}</div>
+          ${e.article_url ? `<div style="margin-top:.25rem"><a href="${e.article_url}" target="_blank" style="font-size:.73rem;color:#7c3aed">🔗 Bài viết gốc</a></div>` : ''}
+        </div>
+        <div style="display:flex;align-items:center;gap:.4rem;flex-shrink:0">
+          <span style="font-size:.7rem;padding:.18rem .55rem;border-radius:99px;background:${impactColor[e.impact]||'#6b5e8a'}22;color:${impactColor[e.impact]||'#6b5e8a'};border:1px solid ${impactColor[e.impact]||'#6b5e8a'}44">${e.impact}</span>
+          <button onclick="editMacroEvent('${e.id}')" title="Chỉnh sửa sự kiện" style="background:rgba(96,165,250,0.1);border:1px solid rgba(96,165,250,0.3);border-radius:6px;color:#60a5fa;font-size:.72rem;padding:.2rem .5rem;cursor:pointer"><img src="icon_pencil.svg" class="btn-svg-icon" alt=""></button>
+          <button onclick="addMacroArticleUrl('${e.id}')" title="Thêm nhanh link bài viết" style="background:rgba(139,92,246,0.1);border:1px solid rgba(139,92,246,0.25);border-radius:6px;color:#a78bfa;font-size:.72rem;padding:.2rem .5rem;cursor:pointer">🔗</button>
+          <button onclick="deleteMacroEvent('${e.id}')" style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.25);border-radius:6px;color:#f87171;font-size:.72rem;padding:.2rem .5rem;cursor:pointer">✕</button>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  async function addMacroArticleUrl(id) {
+    const url = prompt('Nhập URL bài viết gốc:');
+    if (!url) return;
+    await sb.from('macro_events').update({ article_url: url }).eq('id', id);
+    await loadAdminMacroEvents();
+  }
+
+  async function deleteMacroEvent(id) {
+    if (!confirm('Xóa sự kiện này?')) return;
+    await sb.from('macro_events').delete().eq('id', id);
+    await loadAdminMacroEvents();
+  }
+
+  // ── Macro Events Excel Import ──────────────────────────────────────
+  let _macroParsedRows = [];
+
+  function toggleMacroImportForm() {
+    const f = document.getElementById('macro-import-form');
+    f.style.display = f.style.display === 'none' ? 'block' : 'none';
+    if (f.style.display === 'block') {
+      document.getElementById('macro-add-form').style.display = 'none';
+    }
+    cancelMacroImport();
+  }
+
+  function cancelMacroImport() {
+    _macroParsedRows = [];
+    document.getElementById('macro-preview').style.display = 'none';
+    document.getElementById('macro-file').value = '';
+  }
+
+  function parseMacroExcel() {
+    const fileInput = document.getElementById('macro-file');
+    if (!fileInput.files[0]) { showToast('Vui lòng chọn file Excel', 'error'); return; }
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        const wb   = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
+        const ws   = wb.Sheets[wb.SheetNames[0]];
+        // raw:false → returns formatted display strings (e.g. "6%" not 0.06)
+        const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '', raw: false });
+
+        // Find header row (row with "Tên Sự Kiện")
+        let headerRow = -1;
+        for (let i = 0; i < rows.length; i++) {
+          if (String(rows[i][0]).includes('Tên') || String(rows[i][0]).toLowerCase().includes('ten')) {
+            headerRow = i; break;
+          }
+        }
+        if (headerRow < 0) { showToast('Không tìm thấy hàng tiêu đề. Dùng đúng template.', 'error'); return; }
+
+        _macroParsedRows = [];
+        const errors = [];
+
+        for (let i = headerRow + 1; i < rows.length; i++) {
+          const row = rows[i];
+          const name    = String(row[0] || '').trim();
+          const dateStr = String(row[1] || '').trim();
+          const timeStr = String(row[2] || '').trim();
+          const impact  = String(row[3] || '').trim();
+          if (!name && !dateStr) continue; // skip empty rows
+
+          if (!name)    { errors.push(`Hàng ${i+1}: Thiếu tên sự kiện`); continue; }
+          if (!dateStr) { errors.push(`Hàng ${i+1}: Thiếu ngày`); continue; }
+          if (!timeStr) { errors.push(`Hàng ${i+1}: Thiếu giờ`); continue; }
+          if (!['High','Medium','Low'].includes(impact)) {
+            errors.push(`Hàng ${i+1}: Mức độ "${impact}" không hợp lệ (phải là High/Medium/Low)`); continue;
+          }
+
+          // Parse date dd/mm/yyyy + time hh:mm → ISO
+          const [day, month, year] = dateStr.split('/');
+          if (!day || !month || !year) { errors.push(`Hàng ${i+1}: Ngày sai định dạng (dd/mm/yyyy)`); continue; }
+          const isoStr = `${year}-${month.padStart(2,'0')}-${day.padStart(2,'0')}T${timeStr.padStart(5,'0')}:00`;
+          const dt = new Date(isoStr);
+          if (isNaN(dt.getTime())) { errors.push(`Hàng ${i+1}: Ngày/giờ không hợp lệ`); continue; }
+
+          const monthYear = `${year}-${month.padStart(2,'0')}`;
+          // Safety net: if XLSX still returns a bare decimal (e.g. 0.06), convert to "6%"
+          const fmtPct = v => {
+            const s = String(v || '').trim();
+            if (s === '') return null;
+            const n = parseFloat(s);
+            if (!isNaN(n) && n > 0 && n < 1 && !s.includes('%')) return (n * 100).toFixed(2) + '%';
+            return s;
+          };
+          _macroParsedRows.push({
+            event_name:  name,
+            event_date:  dt.toISOString(),
+            impact,
+            country:     String(row[6] || 'US').trim() || 'US',
+            forecast:    fmtPct(row[4]),
+            previous:    fmtPct(row[5]),
+            article_url: String(row[7] || '').trim() || null,
+            month_year:  monthYear,
+            _display_date: dateStr,
+            _display_time: timeStr,
+          });
+        }
+
+        if (errors.length) {
+          showToast(`⚠️ ${errors.length} dòng lỗi bị bỏ qua:\n${errors.slice(0,3).join('\n')}`, 'error');
+        }
+        if (!_macroParsedRows.length) {
+          showToast('Không tìm thấy dữ liệu hợp lệ', 'error'); return;
+        }
+
+        // Show preview
+        document.getElementById('macro-preview-info').textContent =
+          `✅ Tìm thấy ${_macroParsedRows.length} sự kiện hợp lệ${errors.length ? ` (bỏ qua ${errors.length} lỗi)` : ''}`;
+
+        const cols = ['Tên Sự Kiện','Ngày','Giờ','Mức Độ','Forecast','Previous'];
+        document.getElementById('macro-preview-head').innerHTML = cols.map(c =>
+          `<th style="padding:.35rem .6rem;color:#9d8ec7;font-size:.75rem;font-weight:600;white-space:nowrap">${c}</th>`
+        ).join('');
+        document.getElementById('macro-preview-body').innerHTML = _macroParsedRows.slice(0,8).map(r => `
+          <tr style="border-top:1px solid rgba(139,92,246,0.1)">
+            <td style="padding:.3rem .6rem;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(r.event_name)}</td>
+            <td style="padding:.3rem .6rem;white-space:nowrap">${esc(r._display_date)}</td>
+            <td style="padding:.3rem .6rem">${esc(r._display_time)}</td>
+            <td style="padding:.3rem .6rem"><span style="padding:.1rem .45rem;border-radius:99px;font-size:.7rem;font-weight:700;background:${r.impact==='High'?'rgba(248,113,113,0.15)':r.impact==='Medium'?'rgba(245,158,11,0.15)':'rgba(52,211,153,0.15)'};color:${r.impact==='High'?'#f87171':r.impact==='Medium'?'#f59e0b':'#34d399'}">${r.impact}</span></td>
+            <td style="padding:.3rem .6rem;color:#9d8ec7">${esc(r.forecast||'—')}</td>
+            <td style="padding:.3rem .6rem;color:#9d8ec7">${esc(r.previous||'—')}</td>
+          </tr>`).join('');
+
+        document.getElementById('macro-preview').style.display = 'block';
+      } catch(err) {
+        showToast('Lỗi đọc file: ' + err.message, 'error');
+      }
+    };
+    reader.readAsArrayBuffer(fileInput.files[0]);
+  }
+
+// ════════════════════════════════════════════════════════════
+//  KIẾN THỨC CRYPTO — admin panel
+// ════════════════════════════════════════════════════════════
+let _ktaTab = 'pending';
+
+async function loadKnowledgeAdmin() {
+  showKtaTab(_ktaTab);
+}
+
+async function showKtaTab(tab) {
+  _ktaTab = tab;
+  // Style tab buttons
+  ['pending','published','rejected'].forEach(t => {
+    const btn = document.getElementById('kta-tab-' + t);
+    if (btn) btn.className = t === tab ? 'btn-primary' : 'btn-secondary';
+  });
+
+  const list = document.getElementById('kta-list');
+  if (!list || !sb) return;
+  list.innerHTML = '<p style="color:rgba(196,181,253,.5);font-size:.88rem;padding:.5rem 0">Đang tải...</p>';
+
+  try {
+    const { data, error } = await sb
+      .from('knowledge_posts')
+      .select('*')
+      .eq('status', tab)
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+
+    // Update pending count badge
+    if (tab === 'pending') {
+      const countEl = document.getElementById('kta-pending-count');
+      if (countEl) countEl.textContent = data.length ? `(${data.length})` : '';
+    }
+
+    if (!data || data.length === 0) {
+      list.innerHTML = '<p style="color:rgba(196,181,253,.4);font-size:.88rem;text-align:center;padding:2.5rem 0">Không có bài viết nào.</p>';
+      return;
+    }
+
+    const catLabels = { futures:'📈 Futures', onchain:'⛓️ Onchain', p2p:'💱 P2P', basics:'📚 Cơ Bản', tools:'🔧 Tools' };
+
+    list.innerHTML = data.map(p => {
+      const date = new Date(p.created_at).toLocaleString('vi-VN');
+      const cat  = esc(catLabels[p.category] || p.category);
+      const id   = jsEsc(p.id);
+      let actions = '';
+      if (tab === 'pending') {
+        actions = `<button class="btn-primary"   style="font-size:.78rem;padding:.35rem .85rem" onclick="ktaApprove('${id}')">✅ Duyệt</button>
+                   <button class="btn-secondary" style="font-size:.78rem;padding:.35rem .85rem;color:#f87171" onclick="ktaReject('${id}')">❌ Từ Chối</button>`;
+      } else if (tab === 'published') {
+        actions = `<button class="btn-secondary" style="font-size:.78rem;padding:.35rem .85rem" onclick="ktaTogglePin('${id}',${p.pinned ? 'true' : 'false'})">${p.pinned ? '📌 Bỏ Ghim' : '📌 Ghim'}</button>
+                   <button class="btn-secondary" style="font-size:.78rem;padding:.35rem .85rem;color:#f87171" onclick="ktaDelete('${id}')">🗑️ Xoá</button>`;
+      } else {
+        actions = `<button class="btn-secondary" style="font-size:.78rem;padding:.35rem .85rem" onclick="ktaApprove('${id}')">↩️ Duyệt Lại</button>
+                   <button class="btn-secondary" style="font-size:.78rem;padding:.35rem .85rem;color:#f87171" onclick="ktaDelete('${id}')">🗑️ Xoá</button>`;
+      }
+      return `
+        <div style="background:rgba(255,255,255,.03);border:1px solid rgba(139,92,246,.18);border-radius:12px;padding:1rem 1.2rem;margin-bottom:.8rem">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;flex-wrap:wrap">
+            <div style="flex:1;min-width:0">
+              <div style="font-weight:700;color:#e9d5ff;font-size:.88rem;margin-bottom:.25rem">${esc(p.title)}</div>
+              <div style="font-size:.76rem;color:rgba(196,181,253,.45);margin-bottom:.45rem">${cat} · 👤 ${esc(p.author_name||'')} · ${date}</div>
+              ${p.excerpt ? `<div style="font-size:.8rem;color:rgba(196,181,253,.6);line-height:1.5">${esc(p.excerpt.substring(0,150))}${p.excerpt.length>150?'…':''}</div>` : ''}
+            </div>
+            <div style="display:flex;gap:.4rem;flex-shrink:0;flex-wrap:wrap;align-items:flex-start">${actions}</div>
+          </div>
+        </div>`;
+    }).join('');
+  } catch(e) {
+    list.innerHTML = `<p style="color:#f87171;font-size:.88rem">Lỗi: ${esc(e.message)}</p>`;
+  }
+}
+
+async function ktaApprove(id) {
+  if (!sb) return;
+  await sb.from('knowledge_posts').update({ status: 'published' }).eq('id', id);
+  showKtaTab(_ktaTab);
+}
+async function ktaReject(id) {
+  if (!sb) return;
+  await sb.from('knowledge_posts').update({ status: 'rejected' }).eq('id', id);
+  showKtaTab(_ktaTab);
+}
+async function ktaTogglePin(id, currentPin) {
+  if (!sb) return;
+  await sb.from('knowledge_posts').update({ pinned: !currentPin }).eq('id', id);
+  showKtaTab(_ktaTab);
+}
+async function ktaDelete(id) {
+  if (!confirm('Xoá bài viết này? Không thể hoàn tác.')) return;
+  if (!sb) return;
+  await sb.from('knowledge_posts').delete().eq('id', id);
+  showKtaTab(_ktaTab);
+}
+
+// Admin can also create posts directly (published immediately, no approval needed)
+function openKtAdminPost() {
+  ['kta-w-title','kta-w-excerpt','kta-w-content','kta-w-cover','kta-w-yt'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = '';
+  });
+  const cat = document.getElementById('kta-w-cat'); if (cat) cat.value = '';
+  const err = document.getElementById('kta-w-error'); if (err) err.style.display = 'none';
+  const modal = document.getElementById('kta-write-modal');
+  if (modal) modal.style.display = 'flex';
+}
+function closeKtaWrite() {
+  const modal = document.getElementById('kta-write-modal');
+  if (modal) modal.style.display = 'none';
+}
+async function submitKtaPost() {
+  const title   = (document.getElementById('kta-w-title')?.value   || '').trim();
+  const cat     =  document.getElementById('kta-w-cat')?.value     || '';
+  const excerpt = (document.getElementById('kta-w-excerpt')?.value || '').trim();
+  const content = (document.getElementById('kta-w-content')?.value || '').trim();
+  const cover   = (document.getElementById('kta-w-cover')?.value   || '').trim();
+  const yt      = (document.getElementById('kta-w-yt')?.value      || '').trim();
+  const errEl   =  document.getElementById('kta-w-error');
+  const btn     =  document.getElementById('kta-w-submit');
+  const showErr = msg => { if (errEl) { errEl.textContent = msg; errEl.style.display = 'block'; } };
+  if (errEl) errEl.style.display = 'none';
+  if (!title)   return showErr('Vui lòng nhập tiêu đề.');
+  if (!cat)     return showErr('Vui lòng chọn danh mục.');
+  if (!excerpt) return showErr('Vui lòng nhập tóm tắt ngắn.');
+  if (!content) return showErr('Vui lòng nhập nội dung.');
+  if (btn) { btn.disabled = true; btn.textContent = 'Đang lưu...'; }
+  try {
+    const { error } = await sb.from('knowledge_posts').insert([{
+      title, category: cat, excerpt, content,
+      cover_image: cover || null, youtube_url: yt || null,
+      author_name: 'Admin', status: 'published', pinned: false
+    }]);
+    if (error) throw error;
+    closeKtaWrite();
+    showKtaTab('published');
+  } catch(e) {
+    showErr('Lỗi: ' + (e.message || 'Không xác định'));
+    if (btn) { btn.disabled = false; btn.textContent = 'Đăng Bài'; }
+  }
+}
+</script>
+
+<!-- Admin: Write Knowledge Post Modal -->
+<div id="kta-write-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:6000;align-items:center;justify-content:center;padding:1.5rem">
+  <div style="background:#120c2a;border:1px solid rgba(139,92,246,.35);border-radius:20px;width:100%;max-width:580px;max-height:90vh;overflow-y:auto;padding:2rem;position:relative">
+    <button onclick="closeKtaWrite()" style="position:absolute;top:1rem;right:1rem;background:rgba(255,255,255,.07);border:none;color:#c4b5d9;width:32px;height:32px;border-radius:50%;font-size:1rem;cursor:pointer">✕</button>
+    <h3 style="color:#e9d5ff;margin:0 0 1.5rem;font-size:1rem;font-weight:700">📖 Đăng Bài Kiến Thức</h3>
+    <div style="display:flex;flex-direction:column;gap:.9rem">
+      <div><label style="display:block;font-size:.76rem;font-weight:600;color:rgba(196,181,253,.6);margin-bottom:.3rem;text-transform:uppercase;letter-spacing:.4px">Tiêu đề *</label>
+        <input id="kta-w-title" type="text" placeholder="Tiêu đề bài viết..." style="width:100%;box-sizing:border-box;background:rgba(255,255,255,.06);border:1px solid rgba(139,92,246,.25);border-radius:10px;color:#e9d5ff;padding:.55rem .8rem;font-size:.86rem;font-family:inherit;outline:none"></div>
+      <div><label style="display:block;font-size:.76rem;font-weight:600;color:rgba(196,181,253,.6);margin-bottom:.3rem;text-transform:uppercase;letter-spacing:.4px">Danh mục *</label>
+        <select id="kta-w-cat" style="width:100%;background:rgba(255,255,255,.06);border:1px solid rgba(139,92,246,.25);border-radius:10px;color:#e9d5ff;padding:.55rem .8rem;font-size:.86rem;font-family:inherit;outline:none;cursor:pointer">
+          <option value="">-- Chọn --</option>
+          <option value="futures">📈 Futures</option><option value="onchain">⛓️ Onchain</option>
+          <option value="p2p">💱 P2P</option><option value="basics">📚 Cơ Bản</option><option value="tools">🔧 Tools</option>
+        </select></div>
+      <div><label style="display:block;font-size:.76rem;font-weight:600;color:rgba(196,181,253,.6);margin-bottom:.3rem;text-transform:uppercase;letter-spacing:.4px">Tóm tắt *</label>
+        <textarea id="kta-w-excerpt" rows="2" placeholder="1–2 câu mô tả..." style="width:100%;box-sizing:border-box;background:rgba(255,255,255,.06);border:1px solid rgba(139,92,246,.25);border-radius:10px;color:#e9d5ff;padding:.55rem .8rem;font-size:.86rem;font-family:inherit;outline:none;resize:vertical"></textarea></div>
+      <div><label style="display:block;font-size:.76rem;font-weight:600;color:rgba(196,181,253,.6);margin-bottom:.3rem;text-transform:uppercase;letter-spacing:.4px">Nội dung *</label>
+        <textarea id="kta-w-content" rows="6" placeholder="Nội dung bài viết..." style="width:100%;box-sizing:border-box;background:rgba(255,255,255,.06);border:1px solid rgba(139,92,246,.25);border-radius:10px;color:#e9d5ff;padding:.55rem .8rem;font-size:.86rem;font-family:inherit;outline:none;resize:vertical"></textarea></div>
+      <div><label style="display:block;font-size:.76rem;font-weight:600;color:rgba(196,181,253,.6);margin-bottom:.3rem;text-transform:uppercase;letter-spacing:.4px">Ảnh bìa (tuỳ chọn)</label>
+        <input id="kta-w-cover" type="url" placeholder="https://..." style="width:100%;box-sizing:border-box;background:rgba(255,255,255,.06);border:1px solid rgba(139,92,246,.25);border-radius:10px;color:#e9d5ff;padding:.55rem .8rem;font-size:.86rem;font-family:inherit;outline:none"></div>
+      <div><label style="display:block;font-size:.76rem;font-weight:600;color:rgba(196,181,253,.6);margin-bottom:.3rem;text-transform:uppercase;letter-spacing:.4px">YouTube (tuỳ chọn)</label>
+        <input id="kta-w-yt" type="url" placeholder="https://youtube.com/..." style="width:100%;box-sizing:border-box;background:rgba(255,255,255,.06);border:1px solid rgba(139,92,246,.25);border-radius:10px;color:#e9d5ff;padding:.55rem .8rem;font-size:.86rem;font-family:inherit;outline:none"></div>
+      <div id="kta-w-error" style="display:none;color:#f87171;font-size:.8rem;padding:.45rem .8rem;background:rgba(248,113,113,.08);border-radius:8px"></div>
+      <div style="display:flex;gap:.6rem;justify-content:flex-end">
+        <button onclick="closeKtaWrite()" style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);color:#c4b5d9;padding:.5rem 1.2rem;border-radius:50px;font-size:.83rem;cursor:pointer;font-family:inherit">Huỷ</button>
+        <button id="kta-w-submit" onclick="submitKtaPost()" class="btn-primary" style="font-size:.83rem;padding:.5rem 1.4rem">Đăng Bài</button>
+      </div>
+    </div>
+  </div>
+</div>
