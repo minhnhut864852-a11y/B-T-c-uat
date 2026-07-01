@@ -716,7 +716,7 @@ tr:hover td{background:rgba(139,92,246,0.04)}
                 <col style="width:130px">
                 <col style="width:90px">
                 <col style="width:100px">
-                <col>
+                <col style="width:220px">
               </colgroup>
               <thead>
                 <tr>
@@ -1817,7 +1817,7 @@ function renderMembersTable(data) {
       <td style="font-size:.78rem;color:var(--accent);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(r.email || '—')}</td>
       <td style="font-size:.82rem">${esc(r.zalo || '—')}</td>
       <td><span class="badge badge-purple" style="font-size:.72rem">${esc(r.von || '—')}</span></td>
-      <td style="font-size:.75rem;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(r.muc_tieu||'')}">
+      <td style="font-size:.75rem;color:var(--text2);word-break:break-word" title="${esc(r.muc_tieu||'')}">
         ${goalShort !== '—' ? goalShort : '—'}
       </td>
       <td style="font-size:.78rem;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(r.uid_value||'')}${r.san?' · '+esc(r.san):''}">
@@ -1825,7 +1825,7 @@ function renderMembersTable(data) {
       </td>
       <td style="color:var(--text2);font-size:.78rem;white-space:nowrap">${fmtDate(r.created_at)}</td>
       <td>${statusBadge}</td>
-      <td>
+      <td style="white-space:nowrap">
         <div class="action-group">
           ${approveBtn}${inactiveBtn}${resendBtn}${noEmailNote}${deleteBtn}
         </div>
@@ -2005,7 +2005,7 @@ async function loadEvents() {
       <td style="font-size:.85rem">${r.event_date ? fmtDateShort(r.event_date) : '—'} ${fmtEventRange(r) ? '<br><span style="color:var(--text2);font-size:.78rem">'+esc(fmtEventRange(r))+'</span>' : ''}</td>
       <td style="font-size:.82rem;color:var(--text2)">${esc(r.location || '—')}</td>
       <td>${r.status==='published' ? '<span class="badge badge-green">Đã Đăng</span>' : '<span class="badge badge-gray">Nháp</span>'}</td>
-      <td>
+      <td style="white-space:nowrap">
         <div class="action-group">
           <button class="btn-edit" onclick="editEvent('${r.id}')"><img src="icon_pencil.svg" class="btn-svg-icon" alt=""> Sửa</button>
           ${r.status==='published'
@@ -2112,7 +2112,7 @@ async function loadNews() {
       <td><span class="badge badge-purple">${esc(r.tag || '—')}</span></td>
       <td style="font-size:.82rem;color:var(--text2)">${r.published_date ? fmtDateShort(r.published_date) : '—'}</td>
       <td>${r.status==='published' ? '<span class="badge badge-green">Đã Đăng</span>' : '<span class="badge badge-gray">Nháp</span>'}</td>
-      <td>
+      <td style="white-space:nowrap">
         <div class="action-group">
           <button class="btn-edit" onclick="editNews('${r.id}')"><img src="icon_pencil.svg" class="btn-svg-icon" alt=""> Sửa</button>
           ${r.status==='published'
