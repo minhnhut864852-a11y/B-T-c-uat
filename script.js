@@ -2100,10 +2100,10 @@ function closeEventDetail() {
 // ═══════════════════════════════════════════════════════════════
 // SHARE BUTTON — news / daily news (navigator.share + fallback)
 // ═══════════════════════════════════════════════════════════════
-const SWIFT_ENDPOINT = 'https://gvmgnaddbodbovxiugjd.supabase.co/functions/v1/swift-endpoint';
 function shareArticle(title, imageUrl, articleId, articleType, btnEl) {
-  const siteUrl   = location.origin + location.pathname;
-  const shareUrl  = articleId ? SWIFT_ENDPOINT + '?id=' + encodeURIComponent(articleId) + '&type=' + encodeURIComponent(articleType || 'news') : siteUrl;
+  const siteUrl   = 'https://botoc.trading';
+  const sectionUrl = articleType === 'daily' ? siteUrl + '/#tin-hang-ngay' : siteUrl + '/#news';
+  const shareUrl  = sectionUrl;
   const text = title || document.title;
   if (navigator.share) {
     navigator.share({ title: text, text: text, url: shareUrl }).catch(() => {});
