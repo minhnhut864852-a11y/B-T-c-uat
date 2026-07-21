@@ -1078,17 +1078,23 @@ async function doMemberLogin() {
   const err   = document.getElementById('ml-error');
   if (!email || !pass) { showMlError('Vui lòng nhập email và mật khẩu.'); return; }
   if (btn) { btn.textContent = 'Đang đăng nhập...'; btn.disabled = true; btn.style.opacity = '.7'; }
-  const { data, error } = await window._supabase.auth.signInWithPassword({ email, password: pass });
-  if (btn) { btn.textContent = 'Đăng Nhập →'; btn.disabled = false; btn.style.opacity = '1'; }
-  if (error) {
-    showMlError('Sai email hoặc mật khẩu.');
-    if (window.gaEvent) gaEvent('login_failed');
-    return;
+  try {
+    const { data, error } = await window._supabase.auth.signInWithPassword({ email, password: pass });
+    if (btn) { btn.textContent = 'Đăng Nhập →'; btn.disabled = false; btn.style.opacity = '1'; }
+    if (error) {
+      showMlError('Sai email hoặc mật khẩu.');
+      if (window.gaEvent) gaEvent('login_failed');
+      return;
+    }
+    if (window.gaEvent) gaEvent('member_login_success');
+    closeMemberLogin();
+    setMemberLoggedIn(data.user);
+    showTradeLockOverlay(false);
+  } catch(e) {
+    if (btn) { btn.textContent = 'Đăng Nhập →'; btn.disabled = false; btn.style.opacity = '1'; }
+    showMlError('Đăng nhập thất bại. Vui lòng thử lại.');
+    console.error('doMemberLogin error:', e);
   }
-  if (window.gaEvent) gaEvent('member_login_success');
-  closeMemberLogin();
-  setMemberLoggedIn(data.user);
-  showTradeLockOverlay(false);
 }
 async function memberLogout() {
   await window._supabase.auth.signOut();
@@ -1211,6 +1217,8 @@ function setMemberLoggedIn(user) {
   if (mobMember) mobMember.style.setProperty('display','block','important');
   if (mobEmail)  mobEmail.textContent = email;
   initKnowledgeSection();
+  const lawWrap = document.getElementById('law-float-wrap');
+  if (lawWrap) lawWrap.style.display = 'flex';
 }
 function setMemberLoggedOut() {
   window._tradeAccessGranted = false;
@@ -1230,6 +1238,9 @@ function setMemberLoggedOut() {
   if (mobLogin)  mobLogin.style.setProperty('display','flex','important');
   if (mobMember) mobMember.style.setProperty('display','none','important');
   hideKnowledgeSection();
+  const lawWrap = document.getElementById('law-float-wrap');
+  if (lawWrap) lawWrap.style.display = 'none';
+  closeLawChat();
 }
 function toggleMemberMenu(e) {
   e.stopPropagation();
@@ -2118,7 +2129,7 @@ function shareArticle(title, imageUrl, articleId, articleType, btnEl) {
   const copyBtn = fb.querySelector('.share-copy');
   if (copyBtn) {
     copyBtn.onclick = function() {
-      navigator.clipboard.writeText(url).then(function() {
+      navigator.clipboard.writeText(shareUrl).then(function() {
         copyBtn.textContent = '✓ Đã chép';
         setTimeout(function(){ copyBtn.textContent = '🔗 Copy Link'; }, 1500);
       }).catch(function(){});
@@ -2926,4 +2937,72 @@ async function submitKtPost() {
     showErr('Lỗi: ' + (e.message || 'Không xác định'));
     if (btn) { btn.disabled = false; btn.textContent = 'Gửi Bài'; }
   }
+}
+
+// ── LAW CHAT ────────────────────────────────────────────────────────────────
+function openLawChat() {
+  window._supabase.auth.getSession().then(({ data: { session } }) => {
+    if (!session?.user) {
+      openMemberLogin();
+      return;
+    }
+    const modal = document.getElementById('law-chat-modal');
+    modal.classList.add('open');
+    modal.setAttribute('aria-hidden', 'false');
+    document.getElementById('law-chat-input').focus();
+  });
+}
+
+function closeLawChat() {
+  const modal = document.getElementById('law-chat-modal');
+  modal.classList.remove('open');
+  modal.setAttribute('aria-hidden', 'true');
+}
+
+async function sendLawQuestion() {
+  const input   = document.getElementById('law-chat-input');
+  const messages = document.getElementById('law-chat-messages');
+  const sendBtn = document.getElementById('law-chat-send');
+  const question = input.value.trim();
+  if (!question || sendBtn.disabled) return;
+
+  // User message
+  const userMsg = document.createElement('div');
+  userMsg.className = 'law-msg user';
+  userMsg.textContent = question;
+  messages.appendChild(userMsg);
+  input.value = '';
+  sendBtn.disabled = true;
+
+  // Typing indicator
+  const typing = document.createElement('div');
+  typing.className = 'law-msg typing';
+  typing.id = 'law-typing';
+  typing.textContent = '⚖️ Đang tra cứu văn bản pháp luật...';
+  messages.appendChild(typing);
+  messages.scrollTop = messages.scrollHeight;
+
+  try {
+    const res = await fetch('https://law.botoctrading.workers.dev', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ question })
+    });
+    const data = await res.json();
+    document.getElementById('law-typing')?.remove();
+    const botMsg = document.createElement('div');
+    botMsg.className = 'law-msg bot';
+    botMsg.textContent = data.answer || 'Không nhận được phản hồi.';
+    messages.appendChild(botMsg);
+  } catch (e) {
+    document.getElementById('law-typing')?.remove();
+    const errMsg = document.createElement('div');
+    errMsg.className = 'law-msg bot';
+    errMsg.textContent = '⚠️ Lỗi kết nối. Vui lòng thử lại.';
+    messages.appendChild(errMsg);
+  }
+
+  messages.scrollTop = messages.scrollHeight;
+  sendBtn.disabled = false;
+  input.focus();
 }

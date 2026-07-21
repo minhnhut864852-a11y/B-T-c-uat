@@ -1986,7 +1986,6 @@ section.hero {
       <a id="dnn-modal-link" class="dnn-modal-link" href="#" target="_blank" rel="noopener" style="display:none">
         🔗 <span data-vi="Đọc Bài Gốc" data-en="Read Source">Đọc Bài Gốc</span>
       </a>
-      <div id="dnn-modal-share" style="margin-top:1rem"></div>
     </div>
   </div>
 </div>
@@ -2009,12 +2008,34 @@ section.hero {
       </svg>
     </a>
   </div>
+  <div class="float-btn-wrap" id="law-float-wrap" style="display:none">
+    <span class="float-label">Hỏi Luật</span>
+    <button class="float-btn law" id="law-chat-btn" onclick="openLawChat()" title="Hỏi về luật tài sản mã hóa">⚖️</button>
+  </div>
   <div class="float-btn-wrap">
     <span class="float-label" data-vi="Lên đầu trang" data-en="Back to top">Lên đầu trang</span>
     <button class="float-btn totop" id="toTopBtn" onclick="window.scrollTo({top:0,behavior:'smooth'})" title="Back to top">⬆️</button>
   </div>
 </div>
 
+<!-- LAW CHAT MODAL -->
+<div id="law-chat-modal" class="law-modal-overlay" aria-hidden="true">
+  <div class="law-modal-box">
+    <div class="law-modal-header">
+      <span>⚖️ Tư vấn Luật Crypto</span>
+      <button class="law-modal-close" onclick="closeLawChat()" aria-label="Đóng">&times;</button>
+    </div>
+    <div class="law-modal-subtitle">Dựa trên NQ 05/2025/NQ-CP &amp; Luật Công nghệ số 71/2025/QH15</div>
+    <div class="law-chat-messages" id="law-chat-messages">
+      <div class="law-msg bot">Xin chào! Tôi có thể giúp bạn tra cứu quy định về tài sản mã hóa theo pháp luật Việt Nam. Hãy đặt câu hỏi! 👋</div>
+      <div class="law-msg law-disclaimer">⚠️ <strong>Lưu ý:</strong> Đây không phải tư vấn pháp lý chính thức. Vui lòng tham khảo luật sư hoặc cơ quan có thẩm quyền trước khi đưa ra quyết định.</div>
+    </div>
+    <div class="law-chat-input-wrap">
+      <input type="text" id="law-chat-input" placeholder="VD: Tài sản mã hóa là gì?" onkeydown="if(event.key==='Enter')sendLawQuestion()" autocomplete="off"/>
+      <button onclick="sendLawQuestion()" id="law-chat-send">Gửi</button>
+    </div>
+  </div>
+</div>
 
 <!-- REGISTER MODAL -->
 <div id="register-modal" class="reg-modal-overlay" aria-hidden="true">
