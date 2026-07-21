@@ -645,6 +645,30 @@ footer{background:var(--dark);border-top:1px solid rgba(168,85,247,0.15);padding
   font-size: 0.72rem;
   max-width: 100%;
 }
+.law-msg.law-batch-indicator {
+  background: rgba(217,119,6,0.08);
+  border: 1px dashed rgba(217,119,6,0.35);
+  color: rgba(251,191,36,0.8);
+  align-self: stretch;
+  font-size: 0.75rem;
+  max-width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.law-send-now-btn {
+  background: linear-gradient(135deg, #92400e, #d97706);
+  border: none;
+  border-radius: 6px;
+  color: white;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.2rem 0.6rem;
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
+}
 .law-msg.typing {
   background: rgba(168,85,247,0.08);
   border: 1px solid rgba(168,85,247,0.12);
