@@ -3030,7 +3030,11 @@ async function _flushLawBatch() {
     const res = await fetch('https://law.botoctrading.workers.dev', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ question: combined })
+      body: JSON.stringify({
+        question: combined,
+        user_id: window._lawUserId || null,
+        email: window._lawUserEmail || null
+      })
     });
     const data = await res.json();
     document.getElementById('law-typing')?.remove();
@@ -3051,12 +3055,5 @@ async function _flushLawBatch() {
   sendBtn.disabled = false;
   input.focus();
 
-  // Log câu hỏi vào Supabase (fire & forget)
-  if (window._lawUserId) {
-    window._supabase.from('law_questions').insert({
-      user_id: window._lawUserId,
-      email: window._lawUserEmail || null,
-      question: combined
-    });
-  }
+  // Logging handled by Worker
 }
