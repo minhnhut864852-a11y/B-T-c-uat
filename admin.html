@@ -550,6 +550,9 @@ tr:hover td{background:rgba(139,92,246,0.04)}
         <div class="nav-item" onclick="showPage('performance',this)">
           <span class="nav-icon"><img src="icon_efficiency.svg" class="nav-svg-icon" alt=""></span> Hiệu Suất
         </div>
+        <div class="nav-item" onclick="showPage('lawquestions',this)">
+          <span class="nav-icon">⚖️</span> Câu Hỏi Luật
+        </div>
         <div class="nav-section">Tài Khoản</div>
         <div class="nav-item" onclick="showPage('settings',this)">
           <span class="nav-icon"><img src="icon_setting.svg" class="nav-svg-icon" alt=""></span> Cài Đặt
@@ -1032,6 +1035,46 @@ tr:hover td{background:rgba(139,92,246,0.04)}
         </div>
 
         <!-- ── SETTINGS PAGE ── -->
+        <div class="page" id="page-lawquestions">
+          <!-- Stat cards -->
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1.5rem">
+            <div class="chart-card" style="text-align:center">
+              <div style="font-size:2rem;font-weight:800;color:#a855f7" id="lq-total">—</div>
+              <div style="font-size:0.8rem;color:#9ca3af;margin-top:0.3rem">Tổng câu hỏi</div>
+            </div>
+            <div class="chart-card" style="text-align:center">
+              <div style="font-size:2rem;font-weight:800;color:#f59e0b" id="lq-today">—</div>
+              <div style="font-size:0.8rem;color:#9ca3af;margin-top:0.3rem">Hôm nay</div>
+            </div>
+            <div class="chart-card" style="text-align:center">
+              <div style="font-size:1rem;font-weight:700;color:#34d399;word-break:break-all" id="lq-topmember">—</div>
+              <div style="font-size:0.8rem;color:#9ca3af;margin-top:0.3rem">Hỏi nhiều nhất</div>
+            </div>
+          </div>
+          <!-- Table -->
+          <div class="chart-card" style="padding:0;overflow:hidden">
+            <div style="padding:1rem 1.25rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+              <span style="font-weight:700;color:#e2d9f3">⚖️ Lịch sử câu hỏi luật</span>
+              <button onclick="loadLawQuestions()" style="background:rgba(168,85,247,0.15);border:1px solid rgba(168,85,247,0.3);color:#a855f7;border-radius:6px;padding:0.3rem 0.8rem;cursor:pointer;font-size:0.8rem">🔄 Làm mới</button>
+            </div>
+            <div style="overflow-x:auto">
+              <table style="width:100%;border-collapse:collapse;font-size:0.82rem">
+                <thead>
+                  <tr style="background:rgba(168,85,247,0.08)">
+                    <th style="padding:0.65rem 1rem;text-align:left;color:#9ca3af;font-weight:600;white-space:nowrap">Ngày giờ</th>
+                    <th style="padding:0.65rem 1rem;text-align:left;color:#9ca3af;font-weight:600">Email</th>
+                    <th style="padding:0.65rem 1rem;text-align:left;color:#9ca3af;font-weight:600">Câu hỏi</th>
+                    <th style="padding:0.65rem 1rem;text-align:center;color:#9ca3af;font-weight:600">Xóa</th>
+                  </tr>
+                </thead>
+                <tbody id="lq-tbody">
+                  <tr><td colspan="4" style="padding:2rem;text-align:center;color:#6b7280">Đang tải...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
         <div class="page" id="page-settings">
           <div style="max-width:640px">
 
@@ -1512,8 +1555,9 @@ const pageInfo = {
   'knowledge':  { title: 'Kiến Thức Crypto',     sub: 'Duyệt và quản lý bài viết từ cộng đồng' },
   comments:    { title: 'Bình Luận',             sub: 'Quản lý bình luận của cộng đồng' },
   macro:       { title: 'Lịch Kinh Tế Vĩ Mô',  sub: 'Quản lý sự kiện kinh tế vĩ mô thế giới' },
-  performance: { title: 'Hiệu Suất',             sub: 'Import và quản lý dữ liệu hiệu suất giao dịch' },
-  settings:    { title: 'Cài Đặt Tài Khoản', sub: 'Đổi mật khẩu và quản lý quyền truy cập' },
+  performance:   { title: 'Hiệu Suất',             sub: 'Import và quản lý dữ liệu hiệu suất giao dịch' },
+  lawquestions:  { title: 'Câu Hỏi Luật ⚖️',      sub: 'Lịch sử câu hỏi về luật crypto của thành viên' },
+  settings:      { title: 'Cài Đặt Tài Khoản',    sub: 'Đổi mật khẩu và quản lý quyền truy cập' },
 };
 
 function showPage(name, el) {
@@ -1534,6 +1578,7 @@ function showPage(name, el) {
   if (name === 'knowledge') loadKnowledgeAdmin();
   if (name === 'macro') loadMacroPage();
   if (name === 'performance') loadPerformancePage();
+  if (name === 'lawquestions') loadLawQuestions();
   // Auto-close mobile sidebar after switching page
   closeMobileSidebar();
 }
@@ -3454,6 +3499,77 @@ async function submitKtaPost() {
     showErr('Lỗi: ' + (e.message || 'Không xác định'));
     if (btn) { btn.disabled = false; btn.textContent = 'Đăng Bài'; }
   }
+}
+
+// ── LAW QUESTIONS ────────────────────────────────────────────────────────────
+async function loadLawQuestions() {
+  const tbody = document.getElementById('lq-tbody');
+  if (!tbody) return;
+  tbody.innerHTML = '<tr><td colspan="4" style="padding:2rem;text-align:center;color:#6b7280">Đang tải...</td></tr>';
+
+  // Fetch questions + join with auth.users via user_id
+  const { data, error } = await sb
+    .from('law_questions')
+    .select('id, question, created_at, user_id')
+    .order('created_at', { ascending: false })
+    .limit(200);
+
+  if (error || !data) {
+    tbody.innerHTML = '<tr><td colspan="4" style="padding:2rem;text-align:center;color:#ef4444">Lỗi tải dữ liệu.</td></tr>';
+    return;
+  }
+
+  // Get emails from members table by user_id
+  const userIds = [...new Set(data.map(r => r.user_id).filter(Boolean))];
+  let emailMap = {};
+  if (userIds.length > 0) {
+    const { data: members } = await sb
+      .from('members')
+      .select('email, user_id:id')
+      .in('id', userIds);
+    if (members) members.forEach(m => { emailMap[m.user_id] = m.email; });
+  }
+
+  // Stats
+  const total = data.length;
+  const today = data.filter(r => r.created_at?.slice(0,10) === new Date().toISOString().slice(0,10)).length;
+
+  // Top member
+  const countByUser = {};
+  data.forEach(r => { if (r.user_id) countByUser[r.user_id] = (countByUser[r.user_id] || 0) + 1; });
+  const topId = Object.entries(countByUser).sort((a,b) => b[1]-a[1])[0];
+  const topEmail = topId ? (emailMap[topId[0]] || topId[0].slice(0,8) + '...') : '—';
+
+  document.getElementById('lq-total').textContent = total;
+  document.getElementById('lq-today').textContent = today;
+  document.getElementById('lq-topmember').textContent = topEmail + (topId ? ` (${topId[1]})` : '');
+
+  if (data.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="4" style="padding:2rem;text-align:center;color:#6b7280">Chưa có câu hỏi nào.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = data.map(r => {
+    const email = emailMap[r.user_id] || '—';
+    const dt = r.created_at ? new Date(r.created_at).toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh', hour12: false }) : '—';
+    return `<tr style="border-top:1px solid var(--border)">
+      <td style="padding:0.65rem 1rem;color:#9ca3af;white-space:nowrap;font-size:0.75rem">${dt}</td>
+      <td style="padding:0.65rem 1rem;color:#d8b4fe;font-size:0.75rem">${esc(email)}</td>
+      <td style="padding:0.65rem 1rem;color:#e2d9f3">${esc(r.question)}</td>
+      <td style="padding:0.65rem 1rem;text-align:center">
+        <button onclick="deleteLawQuestion('${r.id}',this)" style="background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);color:#ef4444;border-radius:6px;padding:0.2rem 0.6rem;cursor:pointer;font-size:0.75rem">🗑</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+async function deleteLawQuestion(id, btn) {
+  if (!confirm('Xóa câu hỏi này?')) return;
+  btn.disabled = true;
+  const { error } = await sb.from('law_questions').delete().eq('id', id);
+  if (error) { alert('Lỗi xóa: ' + error.message); btn.disabled = false; return; }
+  btn.closest('tr').remove();
+  document.getElementById('lq-total').textContent = parseInt(document.getElementById('lq-total').textContent) - 1;
 }
 </script>
 

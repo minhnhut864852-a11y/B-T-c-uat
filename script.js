@@ -3046,4 +3046,14 @@ async function _flushLawBatch() {
   _lawWaiting = false;
   sendBtn.disabled = false;
   input.focus();
+
+  // Log câu hỏi vào Supabase (fire & forget)
+  window._supabase.auth.getSession().then(({ data: { session } }) => {
+    if (session?.user) {
+      window._supabase.from('law_questions').insert({
+        user_id: session.user.id,
+        question: combined
+      });
+    }
+  });
 }
