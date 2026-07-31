@@ -3507,27 +3507,16 @@ async function loadLawQuestions() {
   if (!tbody) return;
   tbody.innerHTML = '<tr><td colspan="4" style="padding:2rem;text-align:center;color:#6b7280">Đang tải...</td></tr>';
 
-  // Fetch questions + join with auth.users via user_id
+  // Fetch questions — email is stored directly on the row
   const { data, error } = await sb
     .from('law_questions')
-    .select('id, question, created_at, user_id')
+    .select('id, question, created_at, user_id, email')
     .order('created_at', { ascending: false })
     .limit(200);
 
   if (error || !data) {
     tbody.innerHTML = '<tr><td colspan="4" style="padding:2rem;text-align:center;color:#ef4444">Lỗi tải dữ liệu.</td></tr>';
     return;
-  }
-
-  // Get emails from members table by user_id
-  const userIds = [...new Set(data.map(r => r.user_id).filter(Boolean))];
-  let emailMap = {};
-  if (userIds.length > 0) {
-    const { data: members } = await sb
-      .from('members')
-      .select('email, user_id:id')
-      .in('id', userIds);
-    if (members) members.forEach(m => { emailMap[m.user_id] = m.email; });
   }
 
   // Stats
@@ -3538,6 +3527,9 @@ async function loadLawQuestions() {
   const countByUser = {};
   data.forEach(r => { if (r.user_id) countByUser[r.user_id] = (countByUser[r.user_id] || 0) + 1; });
   const topId = Object.entries(countByUser).sort((a,b) => b[1]-a[1])[0];
+  // Build email map from the rows directly
+  const emailMap = {};
+  data.forEach(r => { if (r.user_id && r.email) emailMap[r.user_id] = r.email; });
   const topEmail = topId ? (emailMap[topId[0]] || topId[0].slice(0,8) + '...') : '—';
 
   document.getElementById('lq-total').textContent = total;
@@ -3550,7 +3542,7 @@ async function loadLawQuestions() {
   }
 
   tbody.innerHTML = data.map(r => {
-    const email = emailMap[r.user_id] || '—';
+    const email = r.email || '—';
     const dt = r.created_at ? new Date(r.created_at).toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh', hour12: false }) : '—';
     return `<tr style="border-top:1px solid var(--border)">
       <td style="padding:0.65rem 1rem;color:#9ca3af;white-space:nowrap;font-size:0.75rem">${dt}</td>

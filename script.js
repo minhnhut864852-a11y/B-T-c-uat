@@ -1220,6 +1220,7 @@ function setMemberLoggedIn(user) {
   const lawWrap = document.getElementById('law-float-wrap');
   if (lawWrap) lawWrap.style.display = 'flex';
   window._lawUserId = user?.id || null;
+  window._lawUserEmail = user?.email || null;
 }
 function setMemberLoggedOut() {
   window._tradeAccessGranted = false;
@@ -1243,6 +1244,7 @@ function setMemberLoggedOut() {
   if (lawWrap) lawWrap.style.display = 'none';
   closeLawChat();
   window._lawUserId = null;
+  window._lawUserEmail = null;
 }
 function toggleMemberMenu(e) {
   e.stopPropagation();
@@ -3053,6 +3055,7 @@ async function _flushLawBatch() {
   if (window._lawUserId) {
     window._supabase.from('law_questions').insert({
       user_id: window._lawUserId,
+      email: window._lawUserEmail || null,
       question: combined
     });
   }
