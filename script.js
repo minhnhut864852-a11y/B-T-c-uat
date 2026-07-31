@@ -1219,6 +1219,7 @@ function setMemberLoggedIn(user) {
   initKnowledgeSection();
   const lawWrap = document.getElementById('law-float-wrap');
   if (lawWrap) lawWrap.style.display = 'flex';
+  window._lawUserId = user?.id || null;
 }
 function setMemberLoggedOut() {
   window._tradeAccessGranted = false;
@@ -1241,6 +1242,7 @@ function setMemberLoggedOut() {
   const lawWrap = document.getElementById('law-float-wrap');
   if (lawWrap) lawWrap.style.display = 'none';
   closeLawChat();
+  window._lawUserId = null;
 }
 function toggleMemberMenu(e) {
   e.stopPropagation();
@@ -3048,12 +3050,10 @@ async function _flushLawBatch() {
   input.focus();
 
   // Log câu hỏi vào Supabase (fire & forget)
-  window._supabase.auth.getSession().then(({ data: { session } }) => {
-    if (session?.user) {
-      window._supabase.from('law_questions').insert({
-        user_id: session.user.id,
-        question: combined
-      });
-    }
-  });
+  if (window._lawUserId) {
+    window._supabase.from('law_questions').insert({
+      user_id: window._lawUserId,
+      question: combined
+    });
+  }
 }
