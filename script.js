@@ -555,7 +555,7 @@ function updateDashboard() {
   const ySel = document.getElementById('filterYear');
   const mLabel = mSel.options[mSel.selectedIndex].text;
   const titleEl = document.getElementById('dashTitle');
-  const base = currentLang==='vi' ? 'Hiệu Suất BoToc' : 'BoToc Performance';
+  const base = currentLang==='vi' ? 'Hiệu Suất Phân Tích Thị Trường BoToc' : 'BoToc Market Analysis Performance';
   const suffix = y === -6 ? ' — 6 Tháng Gần Nhất' : (m===0 && y===0) ? '' : ` — ${m!==0?mLabel:''} ${y!==0?y:''}`.trim();
   titleEl.textContent = base + suffix;
 }
@@ -2255,42 +2255,6 @@ function escHtml(s) {
   return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-// ===== PROMO POPUP =====
-function openPromoPopup() {
-  const popup = document.getElementById('promo-popup');
-  if (!popup) return;
-  popup.classList.add('open');
-  document.body.style.overflow = 'hidden';
-  if (window.gaEvent) gaEvent('open_promo_popup');
-}
-
-function closePromoPopup() {
-  const popup = document.getElementById('promo-popup');
-  if (!popup) return;
-  popup.classList.remove('open');
-  document.body.style.overflow = '';
-}
-
-(function initPromoPopup() {
-  document.addEventListener('DOMContentLoaded', async function() {
-    // Skip popup if a member/admin is already logged in
-    try {
-      if (window._supabase) {
-        const { data: { session } } = await _supabase.auth.getSession();
-        if (session) return; // logged-in user → no popup
-      }
-    } catch(e) {}
-    // Attach backdrop click to close
-    const popup = document.getElementById('promo-popup');
-    if (popup) {
-      popup.addEventListener('click', function(e) {
-        if (e.target === popup) closePromoPopup();
-      });
-    }
-    // Show after 1 minute on every visit
-    setTimeout(openPromoPopup, 60000);
-  });
-})();
 
 
 // ===== MACRO ECONOMIC CALENDAR — grouped by ISO week =====

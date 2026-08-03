@@ -485,101 +485,9 @@ section.hero {
   font-size: 1em;
 }
 
-/* ===== PROMO POPUP ===== */
-#promo-popup {
-  display:none;
-  position:fixed;inset:0;z-index:9999;
-  align-items:center;justify-content:center;
-  background:rgba(0,0,0,0.72);
-  backdrop-filter:blur(6px);
-  padding:1rem;
-  animation: promoFadeIn .35s ease;
-}
-#promo-popup.open { display:flex; }
-@keyframes promoFadeIn {
-  from { opacity:0; transform:scale(.94); }
-  to   { opacity:1; transform:scale(1); }
-}
-.promo-card {
-  position:relative;
-  background:linear-gradient(145deg,#0d1117,#161d27);
-  border:1.5px solid transparent;
-  background-clip:padding-box;
-  border-radius:20px;
-  max-width:480px;width:100%;
-  padding:2.5rem 2rem 2rem;
-  text-align:center;
-  box-shadow:0 0 60px rgba(0,200,120,.18),0 8px 40px rgba(0,0,0,.6);
-  animation: promoSlideUp .4s cubic-bezier(.34,1.56,.64,1);
-}
-@keyframes promoSlideUp {
-  from { opacity:0; transform:translateY(32px); }
-  to   { opacity:1; transform:translateY(0); }
-}
-.promo-card::before {
-  content:'';
-  position:absolute;inset:-1.5px;
-  border-radius:21px;
-  background:linear-gradient(135deg,#00c87a,#0099ff,#a855f7);
-  z-index:-1;
-}
-.promo-badge {
-  display:inline-flex;align-items:center;gap:.4rem;
-  background:linear-gradient(90deg,rgba(0,200,122,.15),rgba(0,153,255,.15));
-  border:1px solid rgba(0,200,122,.4);
-  border-radius:99px;
-  padding:.3rem .85rem;
-  font-size:.72rem;font-weight:700;
-  color:#00c87a;letter-spacing:.06em;text-transform:uppercase;
-  margin-bottom:1rem;
-}
-.promo-close-btn {
-  position:absolute;top:1rem;right:1rem;
-  background:rgba(255,255,255,.08);border:none;border-radius:50%;
-  width:30px;height:30px;cursor:pointer;
-  color:#aaa;font-size:1.1rem;line-height:30px;
-  transition:background .2s,color .2s;
-}
-.promo-close-btn:hover { background:rgba(255,255,255,.15);color:#fff; }
-.promo-title {
-  font-size:1.55rem;font-weight:800;
-  background:linear-gradient(90deg,#00c87a,#0099ff);
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
-  margin:.2rem 0 .6rem;line-height:1.25;
-}
-.promo-sub {
-  font-size:.92rem;color:#9ba3b0;margin-bottom:1.4rem;line-height:1.6;
-}
-.promo-perks {
-  list-style:none;padding:0;margin:0 0 1.6rem;
-  display:flex;flex-direction:column;gap:.55rem;
-  text-align:left;
-}
-.promo-perks li {
-  display:flex;align-items:flex-start;gap:.65rem;
-  background:rgba(255,255,255,.04);border-radius:10px;
-  padding:.55rem .85rem;
-  font-size:.88rem;color:#d4dbe8;
-}
-.promo-perks li .perk-icon { font-size:1.1rem;flex-shrink:0;margin-top:.05rem; }
 .idx-btn-svg{width:14px;height:14px;vertical-align:middle;display:inline-block}
 .idx-perk-svg{width:18px;height:18px;vertical-align:middle;flex-shrink:0;margin-top:.05rem;display:inline-block}
 .idx-value-svg{width:18px;height:18px;vertical-align:middle;display:inline-block;margin-right:2px}
-.promo-cta {
-  width:100%;padding:.85rem;border:none;border-radius:12px;cursor:pointer;
-  background:linear-gradient(90deg,#00c87a,#0099ff);
-  color:#fff;font-size:1rem;font-weight:800;letter-spacing:.04em;
-  transition:opacity .2s,transform .15s;
-  box-shadow:0 4px 20px rgba(0,200,122,.35);
-}
-.promo-cta:hover { opacity:.92;transform:translateY(-1px); }
-.promo-dismiss {
-  display:block;margin-top:.85rem;
-  font-size:.78rem;color:#5a6475;cursor:pointer;
-  background:none;border:none;text-decoration:underline;
-  transition:color .2s;
-}
-.promo-dismiss:hover { color:#9ba3b0; }
 
 
 
@@ -848,7 +756,7 @@ section.hero {
   </a>
   <div class="nav-right">
     <ul class="nav-links">
-      <li><a href="#dashboard" data-vi="Hiệu Suất" data-en="Performance">Hiệu Suất</a></li>
+      <li><a href="#dashboard" data-vi="Hiệu Suất Phân Tích Thị Trường" data-en="Market Analysis Performance">Hiệu Suất Phân Tích Thị Trường</a></li>
       <li class="has-submenu">
         <a href="#news" data-vi="Tin Tức" data-en="News">Tin Tức</a>
         <div class="submenu">
@@ -863,9 +771,8 @@ section.hero {
       <li class="has-submenu">
         <a href="#newbie" data-vi="Người Mới" data-en="Beginners">Người Mới</a>
         <div class="submenu">
-          <a href="#newbie" onclick="setTimeout(()=>switchNewbieTab('exchanges',document.querySelectorAll('.newbie-tab-btn')[0]),100)" data-vi="Đối Tác" data-en="Partners"><img src="icon_partner.svg" style="width:16px;height:16px;vertical-align:middle;margin-right:4px" alt=""> Đối Tác</a>
-          <a href="#newbie" onclick="setTimeout(()=>switchNewbieTab('p2p',document.querySelectorAll('.newbie-tab-btn')[1]),100)" data-vi="Kiến Thức P2P" data-en="P2P Knowledge"><img src="icon_light.svg" style="width:16px;height:16px;vertical-align:middle;margin-right:4px" alt=""> Kiến Thức P2P</a>
-          <a href="#newbie" onclick="setTimeout(()=>switchNewbieTab('faq',document.querySelectorAll('.newbie-tab-btn')[2]),100)" data-vi="Thường Gặp" data-en="FAQ"><img src="icon_FAQ_1.svg" style="width:16px;height:16px;vertical-align:middle;margin-right:4px" alt=""> Thường Gặp</a>
+          <a href="#newbie" onclick="setTimeout(()=>switchNewbieTab('p2p',document.querySelectorAll('.newbie-tab-btn')[0]),100)" data-vi="Kiến Thức P2P" data-en="P2P Knowledge"><img src="icon_light.svg" style="width:16px;height:16px;vertical-align:middle;margin-right:4px" alt=""> Kiến Thức P2P</a>
+          <a href="#newbie" onclick="setTimeout(()=>switchNewbieTab('faq',document.querySelectorAll('.newbie-tab-btn')[1]),100)" data-vi="Thường Gặp" data-en="FAQ"><img src="icon_FAQ_1.svg" style="width:16px;height:16px;vertical-align:middle;margin-right:4px" alt=""> Thường Gặp</a>
         </div>
       </li>
       <li class="has-submenu">
@@ -915,7 +822,7 @@ section.hero {
 </nav>
 
 <div class="mobile-menu" id="mobileMenu">
-  <a href="#dashboard" onclick="closeMenu()" data-vi="Hiệu Suất Giao Dịch" data-en="Trading Performance">Hiệu Suất Giao Dịch</a>
+  <a href="#dashboard" onclick="closeMenu()" data-vi="Hiệu Suất Phân Tích Thị Trường" data-en="Market Analysis Performance">Hiệu Suất Phân Tích Thị Trường</a>
   <!-- Tin Tức accordion -->
   <div class="mob-acc-header" onclick="toggleMobAcc('mob-acc-tintuc',this)">
     <span data-vi="Tin Tức" data-en="News">Tin Tức</span><span class="mob-acc-arrow">▾</span>
@@ -933,9 +840,8 @@ section.hero {
     <span data-vi="Người Mới" data-en="Beginners">Người Mới</span><span class="mob-acc-arrow">▾</span>
   </div>
   <div id="mob-acc-newbie" class="mob-acc-body">
-    <a href="#newbie" onclick="setTimeout(()=>switchNewbieTab('exchanges',document.querySelectorAll('.newbie-tab-btn')[0]),100);closeMenu()" data-vi="Đối Tác" data-en="Partners"><img src="icon_partner.svg" style="width:13px;height:13px;vertical-align:middle;margin-right:5px" alt="">Đối Tác</a>
-    <a href="#newbie" onclick="setTimeout(()=>switchNewbieTab('p2p',document.querySelectorAll('.newbie-tab-btn')[1]),100);closeMenu()" data-vi="Kiến Thức P2P" data-en="P2P Knowledge"><img src="icon_light.svg" style="width:13px;height:13px;vertical-align:middle;margin-right:5px" alt="">Kiến Thức P2P</a>
-    <a href="#newbie" onclick="setTimeout(()=>switchNewbieTab('faq',document.querySelectorAll('.newbie-tab-btn')[2]),100);closeMenu()" data-vi="Thường Gặp" data-en="FAQ"><img src="icon_FAQ_1.svg" style="width:13px;height:13px;vertical-align:middle;margin-right:5px" alt="">Thường Gặp</a>
+    <a href="#newbie" onclick="setTimeout(()=>switchNewbieTab('p2p',document.querySelectorAll('.newbie-tab-btn')[0]),100);closeMenu()" data-vi="Kiến Thức P2P" data-en="P2P Knowledge"><img src="icon_light.svg" style="width:13px;height:13px;vertical-align:middle;margin-right:5px" alt="">Kiến Thức P2P</a>
+    <a href="#newbie" onclick="setTimeout(()=>switchNewbieTab('faq',document.querySelectorAll('.newbie-tab-btn')[1]),100);closeMenu()" data-vi="Thường Gặp" data-en="FAQ"><img src="icon_FAQ_1.svg" style="width:13px;height:13px;vertical-align:middle;margin-right:5px" alt="">Thường Gặp</a>
   </div>
   <!-- Về Chúng Tôi accordion -->
   <div class="mob-acc-header" onclick="toggleMobAcc('mob-acc-about',this)">
@@ -1188,12 +1094,12 @@ section.hero {
 <section id="dashboard">
 <div class="reveal" style="max-width:1200px;margin:0 auto">
     <div class="section-label" data-vi="// Kết Quả Thực Tế" data-en="// Real Results">// Kết Quả Thực Tế</div>
-    <h2 class="section-title" data-vi="Hiệu Suất Giao Dịch" data-en="Trading Performance">Hiệu Suất Giao Dịch</h2>
+    <h2 class="section-title" data-vi="Hiệu Suất Phân Tích Thị Trường" data-en="Market Analysis Performance">Hiệu Suất Phân Tích Thị Trường</h2>
     <p style="color:var(--muted);font-size:0.88rem;margin-top:0.5rem" data-vi="Dữ liệu mẫu — cập nhật hàng tháng" data-en="Sample data — updated monthly">Dữ liệu mẫu — cập nhật hàng tháng</p>
   </div>
   <div class="dashboard-container reveal">
     <div class="dashboard-header">
-      <div class="dash-title" id="dashTitle" data-vi="Tổng Quan Hiệu Suất BoToc" data-en="BoToc Performance Overview">Tổng Quan Hiệu Suất BoToc</div>
+      <div class="dash-title" id="dashTitle" data-vi="Tổng Quan Hiệu Suất Phân Tích Thị Trường BoToc" data-en="BoToc Market Analysis Performance Overview">Tổng Quan Hiệu Suất Phân Tích Thị Trường BoToc</div>
       <div style="display:flex;align-items:center;gap:0.8rem;flex-wrap:wrap;">
         <div style="display:flex;align-items:center;gap:0.5rem;">
           <select id="filterMonth" onchange="updateDashboard()" style="background:rgba(255,255,255,0.05);border:1px solid rgba(168,85,247,0.3);color:var(--white);padding:0.4rem 0.8rem;border-radius:8px;font-family:'Space Mono',monospace;font-size:0.75rem;cursor:pointer;outline:none;">
@@ -1663,50 +1569,10 @@ section.hero {
     </div>
     <div class="reveal">
       <div class="newbie-tabs">
-        <button onclick="switchNewbieTab('exchanges',this)" class="newbie-tab-btn active" data-vi="Đối Tác" data-en="Partners"><img src="icon_partner.svg" style="width:16px;height:16px;vertical-align:middle;margin-right:4px" alt=""> Đối Tác</button>
-        <button class="newbie-tab-btn" onclick="switchNewbieTab('p2p',this)" data-vi="Kiến Thức P2P" data-en="P2P Knowledge"><img src="icon_light.svg" style="width:16px;height:16px;vertical-align:middle;margin-right:4px" alt=""> Kiến Thức P2P</button>
+        <button class="newbie-tab-btn active" onclick="switchNewbieTab('p2p',this)" data-vi="Kiến Thức P2P" data-en="P2P Knowledge"><img src="icon_light.svg" style="width:16px;height:16px;vertical-align:middle;margin-right:4px" alt=""> Kiến Thức P2P</button>
         <button class="newbie-tab-btn" onclick="switchNewbieTab('faq',this)" data-vi="Thường Gặp" data-en="FAQ"><img src="icon_FAQ_1.svg" style="width:16px;height:16px;vertical-align:middle;margin-right:4px" alt=""> Thường Gặp</button>
       </div>
-      <div class="newbie-tab-content active" id="ntab-exchanges">
-        <!-- Bottom: Exchange sign-up -->
-  <div class="doi-tac-block reveal">
-    <div class="doi-tac-sub-label" data-vi="📱 Đăng Ký Sàn Giao Dịch" data-en="📱 Exchange Registration">📱 Đăng Ký Sàn Giao Dịch</div>
-    <div class="exchange-grid">
-          <div class="exchange-card">
-            <div class="exchange-logo-wrap"><div style="display:flex;align-items:center;gap:0.65rem;"><img src="data:image/png;base64,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" alt="MEXC" style="height:44px;width:auto;"><span style="font-family:'Be Vietnam Pro',sans-serif;font-weight:700;font-size:1.05rem;color:#ffffff;letter-spacing:0.03em;">MEXC</span></div></div>
-            <ul class="exchange-steps">
-              <li data-vi="Truy cập link AFF của BoToc bên dưới" data-en="Access BoToc AFF link below">Truy cập link AFF của BoToc bên dưới</li>
-              <li data-vi="Nhập Email hoặc SĐT để đăng ký" data-en="Enter Email or Phone to register">Nhập Email hoặc SĐT để đăng ký</li>
-              <li data-vi="Xác minh danh tính (KYC)" data-en="Verify identity (KYC)">Xác minh danh tính (KYC)</li>
-              <li data-vi="Nạp tiền và bắt đầu giao dịch" data-en="Deposit and start trading">Nạp tiền và bắt đầu giao dịch</li>
-            </ul>
-            <a href="https://promote.mexc.co/a/vZIyv1gp" class="aff-btn" onclick="if(window.gaEvent)gaEvent('click_partner_logo',{partner:'MEXC'})" data-vi="Đăng Ký MEXC" data-en="Sign Up MEXC"><img src="icon_link.svg" style="width:16px;height:16px;vertical-align:middle;margin-right:4px" alt=""> Đăng Ký MEXC</a>
-          </div>
-          <div class="exchange-card">
-            <div class="exchange-logo-wrap"><div style="display:flex;align-items:center;gap:0.65rem;"><img src="data:image/png;base64,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" alt="Bybit" style="height:44px;width:auto;"></div></div>
-            <ul class="exchange-steps">
-              <li data-vi="Truy cập link AFF của BoToc bên dưới" data-en="Access BoToc AFF link below">Truy cập link AFF của BoToc bên dưới</li>
-              <li data-vi="Tạo tài khoản với Email" data-en="Create account with Email">Tạo tài khoản với Email</li>
-              <li data-vi="Hoàn thành xác minh KYC" data-en="Complete KYC verification">Hoàn thành xác minh KYC</li>
-              <li data-vi="Nạp USDT và vào thị trường" data-en="Deposit USDT and enter market">Nạp USDT và vào thị trường</li>
-            </ul>
-            <a href="https://partner.bybit.com/b/150357" class="aff-btn" onclick="if(window.gaEvent)gaEvent('click_partner_logo',{partner:'Bybit'})" data-vi="Đăng Ký Bybit" data-en="Sign Up Bybit"><img src="icon_link.svg" style="width:16px;height:16px;vertical-align:middle;margin-right:4px" alt=""> Đăng Ký Bybit</a>
-          </div>
-          <div class="exchange-card">
-            <div class="exchange-logo-wrap"><div style="display:flex;align-items:center;gap:0.65rem;"><img src="data:image/png;base64,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" alt="BingX" style="height:44px;width:auto;"><span style="font-family:'Be Vietnam Pro',sans-serif;font-weight:700;font-size:1.05rem;color:#1460D2;letter-spacing:0.03em;">BingX</span></div></div>
-            <ul class="exchange-steps">
-              <li data-vi="Truy cập link AFF của BoToc bên dưới" data-en="Access BoToc AFF link below">Truy cập link AFF của BoToc bên dưới</li>
-              <li data-vi="Đăng ký tài khoản mới" data-en="Register new account">Đăng ký tài khoản mới</li>
-              <li data-vi="Xác minh danh tính" data-en="Verify identity">Xác minh danh tính</li>
-              <li data-vi="Khám phá tính năng Copy Trade" data-en="Explore Copy Trade feature">Khám phá tính năng Copy Trade</li>
-            </ul>
-            <a href="https://bingx.com/partner/CRYPTOTRIBE" class="aff-btn" onclick="if(window.gaEvent)gaEvent('click_partner_logo',{partner:'BingX'})" data-vi="Đăng Ký BingX" data-en="Sign Up BingX"><img src="icon_link.svg" style="width:16px;height:16px;vertical-align:middle;margin-right:4px" alt=""> Đăng Ký BingX</a>
-          </div>
-        </div>
-  </div>
-      </div>
-
-      <div class="newbie-tab-content" id="ntab-p2p">
+      <div class="newbie-tab-content active" id="ntab-p2p">
         <div class="p2p-grid">
           <div class="p2p-card">
             <h4 data-vi="💡 P2P Là Gì?" data-en="💡 What is P2P?">💡 P2P Là Gì?</h4>
@@ -1825,7 +1691,7 @@ section.hero {
         <p class="about-slogan-text">✦ Living Tribe — Ride the Market ✦</p>
         <div class="about-cta-row">
           <a href="#" onclick="openRegisterModal();return false;" class="btn-primary" data-vi="Gia nhập bộ tộc" data-en="Join the Tribe">Gia nhập bộ tộc</a>
-          <a href="#dashboard" class="btn-secondary" data-vi="Xem hiệu suất" data-en="View Performance">Xem hiệu suất</a>
+          <a href="#dashboard" class="btn-secondary" data-vi="Xem phân tích thị trường" data-en="View Market Analysis">Xem phân tích thị trường</a>
         </div>
       </div>
 
@@ -1854,7 +1720,7 @@ section.hero {
         </a>
         <div class="about-stat-item">
           <span class="about-stat-free-badge">free</span>
-          <span class="about-stat-desc" style="font-size:0.62rem;line-height:1.7;letter-spacing:0.04em;text-align:center;" data-vi="hoàn phí<br>phân tích<br>hỗ trợ 1:1" data-en="refund<br>analysis<br>1:1 support">hoàn phí<br>phân tích<br>hỗ trợ 1:1</span>
+          <span class="about-stat-desc" style="font-size:0.62rem;line-height:1.7;letter-spacing:0.04em;text-align:center;" data-vi="phân tích<br>hỗ trợ 1:1" data-en="analysis<br>1:1 support">phân tích<br>hỗ trợ 1:1</span>
         </div>
       </div>
 
@@ -2193,7 +2059,7 @@ section.hero {
           </div>
         </div>
         <p style="font-size:.75rem;color:rgba(216,180,254,0.55);margin:0;line-height:1.5">
-          🎁 UID của bạn sẽ được Bộ Tộc dùng để xác nhận hoàn phí giao dịch (20–30%++) và chuyển quà ưu đãi dành riêng cho thành viên mới.
+          🎁 UID của bạn sẽ được Bộ Tộc dùng để xác nhận tài khoản và chuyển quà ưu đãi dành riêng cho thành viên mới.
         </p>
       </div>
       <label for="m-inp-consent" style="display:flex;gap:.6rem;align-items:flex-start;margin:1.1rem 0 1rem;font-size:.8rem;line-height:1.55;color:rgba(216,180,254,0.78);cursor:pointer">
@@ -2208,23 +2074,6 @@ section.hero {
   </div>
 </div>
 
-<!-- ===== PROMO POPUP ===== -->
-<div id="promo-popup" role="dialog" aria-modal="true" aria-label="Ưu đãi thành viên">
-  <div class="promo-card">
-    <button class="promo-close-btn" onclick="closePromoPopup()" aria-label="Đóng">×</button>
-    <div class="promo-badge">🎁 Ưu Đãi Thành Viên Mới</div>
-    <div class="promo-title" data-vi="Hoàn Phí 20-30%++<br>+ Quà Hấp Dẫn!" data-en="20-30%++ Fee Rebate<br>+ Amazing Gifts!">Hoàn Phí 20-30%++<br>+ Quà Hấp Dẫn!</div>
-    <p class="promo-sub" data-vi="Đăng ký thành viên Bộ Tộc Trading ngay hôm nay để nhận ưu đãi độc quyền từ cộng đồng trader hàng đầu Việt Nam." data-en="Join Bộ Tộc Trading today for exclusive perks from Vietnam's top trading community.">Đăng ký thành viên Bộ Tộc Trading ngay hôm nay để nhận ưu đãi độc quyền từ cộng đồng trader hàng đầu Việt Nam.</p>
-    <ul class="promo-perks">
-      <li><span class="perk-icon"><img src="icon_moneybag.svg" class="idx-perk-svg" alt=""></span><span data-vi="Hoàn phí giao dịch <strong>20-30%++</strong> qua link affiliate đối tác" data-en="<strong>20-30%++</strong> trading fee rebate via partner affiliate link">Hoàn phí giao dịch <strong>20-30%++</strong> qua link affiliate đối tác</span></li>
-      <li><span class="perk-icon">🎁</span><span data-vi="Phần quà độc quyền dành riêng cho thành viên mới" data-en="Exclusive gifts for new members">Phần quà độc quyền dành riêng cho thành viên mới</span></li>
-      <li><span class="perk-icon"><img src="icon_chart.svg" class="idx-perk-svg" alt=""></span><span data-vi="Truy cập tín hiệu giao dịch & tài liệu nội bộ" data-en="Access trading signals & internal documents">Truy cập tín hiệu giao dịch &amp; tài liệu nội bộ</span></li>
-      <li><span class="perk-icon">🤝</span><span data-vi="Kết nối cộng đồng 500+ trader chuyên nghiệp" data-en="Connect with 500+ professional traders">Kết nối cộng đồng 500+ trader chuyên nghiệp</span></li>
-    </ul>
-    <button class="promo-cta" onclick="closePromoPopup();openRegisterModal();" data-vi="🚀 Đăng Ký Ngay — Miễn Phí" data-en="🚀 Join Now — Free">🚀 Đăng Ký Ngay — Miễn Phí</button>
-    <button class="promo-dismiss" onclick="closePromoPopup()" data-vi="Để sau, cảm ơn" data-en="Maybe later, thanks">Để sau, cảm ơn</button>
-  </div>
-</div>
 
 <!-- ===== MEMBER LOGIN MODAL ===== -->
 <div id="member-login-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:3500;align-items:center;justify-content:center;padding:1rem">
