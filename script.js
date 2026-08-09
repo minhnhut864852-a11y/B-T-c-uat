@@ -2894,6 +2894,7 @@ async function submitKtPost() {
       content,
       cover_image: cover || null,
       youtube_url: yt    || null,
+      author_id:   session.user.id,
       author_name: authorName,
       status:      'pending',
       pinned:      false

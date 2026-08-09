@@ -3487,9 +3487,11 @@ async function submitKtaPost() {
   if (!content) return showErr('Vui lòng nhập nội dung.');
   if (btn) { btn.disabled = true; btn.textContent = 'Đang lưu...'; }
   try {
+    const { data: { session: adminSess } } = await sb.auth.getSession();
     const { error } = await sb.from('knowledge_posts').insert([{
       title, category: cat, excerpt, content,
       cover_image: cover || null, youtube_url: yt || null,
+      author_id: adminSess?.user?.id || null,
       author_name: 'Admin', status: 'published', pinned: false
     }]);
     if (error) throw error;
