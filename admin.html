@@ -554,7 +554,7 @@ tr:hover td{background:rgba(139,92,246,0.04)}
           <span class="nav-icon">⚖️</span> Câu Hỏi Luật
         </div>
         <div class="nav-item" onclick="showPage('telegram',this)">
-          <span class="nav-icon">📊</span> Telegram Analytics
+          <span class="nav-icon"><img src="icon_telegram.svg" class="nav-svg-icon" alt=""></span> Telegram Analytics
         </div>
         <div class="nav-section">Tài Khoản</div>
         <div class="nav-item" onclick="showPage('settings',this)">
@@ -1081,13 +1081,24 @@ tr:hover td{background:rgba(139,92,246,0.04)}
         <!-- ── TELEGRAM ANALYTICS PAGE ── -->
         <div class="page" id="page-telegram">
           <div class="page-header">
-            <h2>📊 Telegram Analytics</h2>
+            <h2><img src="icon_telegram.svg" class="nav-svg-icon" alt=""> Telegram Analytics</h2>
             <div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap">
-              <button class="tg-range-btn btn-primary" data-days="7" onclick="setTgRange(7,this)">7 ngày</button>
-              <button class="tg-range-btn btn-secondary" data-days="30" onclick="setTgRange(30,this)">30 ngày</button>
-              <button class="tg-range-btn btn-secondary" data-days="90" onclick="setTgRange(90,this)">90 ngày</button>
+              <button class="tg-range-btn btn-primary" onclick="setTgRange('all',null,this)">Tất Cả</button>
+              <button class="tg-range-btn btn-secondary" onclick="setTgRange('preset',7,this)">7 ngày</button>
+              <button class="tg-range-btn btn-secondary" onclick="setTgRange('preset',30,this)">30 ngày</button>
+              <button class="tg-range-btn btn-secondary" onclick="setTgRange('preset',90,this)">90 ngày</button>
               <button class="btn-secondary" onclick="loadTelegramAnalytics()">🔄 Làm mới</button>
             </div>
+          </div>
+
+          <div style="display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;margin-bottom:1.5rem;padding:.9rem 1rem;background:rgba(139,92,246,0.05);border:1px solid rgba(139,92,246,0.15);border-radius:12px">
+            <span style="font-size:.75rem;color:var(--text2);white-space:nowrap">Tùy chọn khoảng ngày:</span>
+            <span style="font-size:.75rem;color:var(--text2);white-space:nowrap">Từ:</span>
+            <input type="date" id="tg-date-from" style="background:#1a0e35;border:1px solid rgba(139,92,246,0.3);color:var(--text);border-radius:7px;padding:.3rem .6rem;font-size:.8rem">
+            <span style="font-size:.75rem;color:var(--text2);white-space:nowrap">Đến:</span>
+            <input type="date" id="tg-date-to" style="background:#1a0e35;border:1px solid rgba(139,92,246,0.3);color:var(--text);border-radius:7px;padding:.3rem .6rem;font-size:.8rem">
+            <button class="btn-secondary" onclick="applyTgCustomRange()">Áp Dụng</button>
+            <span id="tg-range-label" style="margin-left:auto;font-size:.78rem;color:var(--text3)">Đang xem: Tất cả thời gian</span>
           </div>
 
           <div class="kpi-grid">
@@ -3659,28 +3670,65 @@ async function deleteLawQuestion(id, btn) {
 // ── TELEGRAM ANALYTICS ───────────────────────────────────────────────────────
 let chartTgHours = null;
 let chartTgTrend = null;
-let _tgRangeDays = 7;
+let _tgFilter = { mode: 'all', days: null, from: null, to: null };
 
-function setTgRange(days, btn) {
-  _tgRangeDays = days;
+function setTgRange(mode, days, btn) {
+  _tgFilter = { mode, days, from: null, to: null };
   document.querySelectorAll('.tg-range-btn').forEach(b => {
     b.classList.remove('btn-primary');
     b.classList.add('btn-secondary');
   });
   if (btn) { btn.classList.remove('btn-secondary'); btn.classList.add('btn-primary'); }
+  document.getElementById('tg-date-from').value = '';
+  document.getElementById('tg-date-to').value = '';
   loadTelegramAnalytics();
+}
+
+function applyTgCustomRange() {
+  const from = document.getElementById('tg-date-from').value;
+  const to = document.getElementById('tg-date-to').value;
+  if (!from && !to) { showToast('Vui lòng chọn ít nhất 1 ngày', 'error'); return; }
+  _tgFilter = { mode: 'custom', days: null, from, to };
+  document.querySelectorAll('.tg-range-btn').forEach(b => {
+    b.classList.remove('btn-primary');
+    b.classList.add('btn-secondary');
+  });
+  loadTelegramAnalytics();
+}
+
+function tgRangeLabel() {
+  if (_tgFilter.mode === 'all') return 'Đang xem: Tất cả thời gian';
+  if (_tgFilter.mode === 'preset') return `Đang xem: ${_tgFilter.days} ngày gần nhất`;
+  if (_tgFilter.mode === 'custom') {
+    const f = _tgFilter.from || '…';
+    const t = _tgFilter.to || '…';
+    return `Đang xem: ${f} → ${t}`;
+  }
+  return '';
 }
 
 async function loadTelegramAnalytics() {
   try {
-    const since = new Date(Date.now() - _tgRangeDays * 24 * 60 * 60 * 1000).toISOString();
-    const { data, error } = await sb
+    let query = sb
       .from('telegram_activity')
       .select('event_type, user_id, username, display_name, message_type, occurred_at')
-      .gte('occurred_at', since)
       .order('occurred_at', { ascending: true })
       .limit(20000);
+
+    if (_tgFilter.mode === 'preset') {
+      const since = new Date(Date.now() - _tgFilter.days * 24 * 60 * 60 * 1000).toISOString();
+      query = query.gte('occurred_at', since);
+    } else if (_tgFilter.mode === 'custom') {
+      if (_tgFilter.from) query = query.gte('occurred_at', new Date(_tgFilter.from + 'T00:00:00+07:00').toISOString());
+      if (_tgFilter.to)   query = query.lte('occurred_at', new Date(_tgFilter.to + 'T23:59:59+07:00').toISOString());
+    }
+    // mode 'all' → no date filter
+
+    const { data, error } = await query;
     if (error) throw error;
+
+    const rangeLabelEl = document.getElementById('tg-range-label');
+    if (rangeLabelEl) rangeLabelEl.textContent = tgRangeLabel();
 
     const rows   = data || [];
     const msgs   = rows.filter(r => r.event_type === 'message');
