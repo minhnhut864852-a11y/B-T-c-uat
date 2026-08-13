@@ -553,6 +553,9 @@ tr:hover td{background:rgba(139,92,246,0.04)}
         <div class="nav-item" onclick="showPage('lawquestions',this)">
           <span class="nav-icon">⚖️</span> Câu Hỏi Luật
         </div>
+        <div class="nav-item" onclick="showPage('telegram',this)">
+          <span class="nav-icon">📊</span> Telegram Analytics
+        </div>
         <div class="nav-section">Tài Khoản</div>
         <div class="nav-item" onclick="showPage('settings',this)">
           <span class="nav-icon"><img src="icon_setting.svg" class="nav-svg-icon" alt=""></span> Cài Đặt
@@ -1075,6 +1078,91 @@ tr:hover td{background:rgba(139,92,246,0.04)}
           </div>
         </div>
 
+        <!-- ── TELEGRAM ANALYTICS PAGE ── -->
+        <div class="page" id="page-telegram">
+          <div class="page-header">
+            <h2>📊 Telegram Analytics</h2>
+            <div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap">
+              <button class="tg-range-btn btn-primary" data-days="7" onclick="setTgRange(7,this)">7 ngày</button>
+              <button class="tg-range-btn btn-secondary" data-days="30" onclick="setTgRange(30,this)">30 ngày</button>
+              <button class="tg-range-btn btn-secondary" data-days="90" onclick="setTgRange(90,this)">90 ngày</button>
+              <button class="btn-secondary" onclick="loadTelegramAnalytics()">🔄 Làm mới</button>
+            </div>
+          </div>
+
+          <div class="kpi-grid">
+            <div class="kpi-card purple">
+              <div class="kpi-icon">💬</div>
+              <div class="kpi-value" id="tg-kpi-messages">—</div>
+              <div class="kpi-label">Tin nhắn</div>
+            </div>
+            <div class="kpi-card blue">
+              <div class="kpi-icon">👥</div>
+              <div class="kpi-value" id="tg-kpi-active">—</div>
+              <div class="kpi-label">Thành viên hoạt động</div>
+            </div>
+            <div class="kpi-card green">
+              <div class="kpi-icon">➕</div>
+              <div class="kpi-value" id="tg-kpi-joins">—</div>
+              <div class="kpi-label">Thành viên mới</div>
+            </div>
+            <div class="kpi-card gold">
+              <div class="kpi-icon">➖</div>
+              <div class="kpi-value" id="tg-kpi-leaves">—</div>
+              <div class="kpi-label">Rời nhóm</div>
+            </div>
+          </div>
+
+          <div class="charts-row">
+            <div class="chart-card">
+              <div class="chart-title">⏰ Giờ Hoạt Động Cao Điểm (giờ ICT)</div>
+              <div class="chart-wrap"><canvas id="chart-tg-hours"></canvas></div>
+            </div>
+            <div class="chart-card">
+              <div class="chart-title">📈 Xu Hướng Tin Nhắn Theo Ngày</div>
+              <div class="chart-wrap"><canvas id="chart-tg-trend"></canvas></div>
+            </div>
+          </div>
+
+          <div class="section-header">
+            <h3>🏆 Thành Viên Hoạt Động Nhiều Nhất</h3>
+          </div>
+          <div class="table-wrap table-scroll" style="margin-bottom:1.75rem">
+            <table>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Thành Viên</th>
+                  <th>Username</th>
+                  <th>Số Ngày Hoạt Động</th>
+                  <th>Tổng Tin Nhắn</th>
+                </tr>
+              </thead>
+              <tbody id="tg-active-tbody">
+                <tr><td colspan="5" style="text-align:center;padding:2rem"><span class="spinner"></span></td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="section-header">
+            <h3>🔔 Tham Gia / Rời Nhóm Gần Đây</h3>
+          </div>
+          <div class="table-wrap table-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>Thời Gian</th>
+                  <th>Thành Viên</th>
+                  <th>Sự Kiện</th>
+                </tr>
+              </thead>
+              <tbody id="tg-joinleave-tbody">
+                <tr><td colspan="3" style="text-align:center;padding:2rem"><span class="spinner"></span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
         <div class="page" id="page-settings">
           <div style="max-width:640px">
 
@@ -1557,6 +1645,7 @@ const pageInfo = {
   macro:       { title: 'Lịch Kinh Tế Vĩ Mô',  sub: 'Quản lý sự kiện kinh tế vĩ mô thế giới' },
   performance:   { title: 'Hiệu Suất Phân Tích Thị Trường', sub: 'Import và quản lý dữ liệu hiệu suất giao dịch' },
   lawquestions:  { title: 'Câu Hỏi Luật ⚖️',      sub: 'Lịch sử câu hỏi về luật crypto của thành viên' },
+  telegram:      { title: 'Telegram Analytics',   sub: 'Phân tích hoạt động nhóm Telegram' },
   settings:      { title: 'Cài Đặt Tài Khoản',    sub: 'Đổi mật khẩu và quản lý quyền truy cập' },
 };
 
@@ -1579,6 +1668,7 @@ function showPage(name, el) {
   if (name === 'macro') loadMacroPage();
   if (name === 'performance') loadPerformancePage();
   if (name === 'lawquestions') loadLawQuestions();
+  if (name === 'telegram') loadTelegramAnalytics();
   // Auto-close mobile sidebar after switching page
   closeMobileSidebar();
 }
@@ -3564,6 +3654,182 @@ async function deleteLawQuestion(id, btn) {
   if (error) { alert('Lỗi xóa: ' + error.message); btn.disabled = false; return; }
   btn.closest('tr').remove();
   document.getElementById('lq-total').textContent = parseInt(document.getElementById('lq-total').textContent) - 1;
+}
+
+// ── TELEGRAM ANALYTICS ───────────────────────────────────────────────────────
+let chartTgHours = null;
+let chartTgTrend = null;
+let _tgRangeDays = 7;
+
+function setTgRange(days, btn) {
+  _tgRangeDays = days;
+  document.querySelectorAll('.tg-range-btn').forEach(b => {
+    b.classList.remove('btn-primary');
+    b.classList.add('btn-secondary');
+  });
+  if (btn) { btn.classList.remove('btn-secondary'); btn.classList.add('btn-primary'); }
+  loadTelegramAnalytics();
+}
+
+async function loadTelegramAnalytics() {
+  try {
+    const since = new Date(Date.now() - _tgRangeDays * 24 * 60 * 60 * 1000).toISOString();
+    const { data, error } = await sb
+      .from('telegram_activity')
+      .select('event_type, user_id, username, display_name, message_type, occurred_at')
+      .gte('occurred_at', since)
+      .order('occurred_at', { ascending: true })
+      .limit(20000);
+    if (error) throw error;
+
+    const rows   = data || [];
+    const msgs   = rows.filter(r => r.event_type === 'message');
+    const joins  = rows.filter(r => r.event_type === 'join');
+    const leaves = rows.filter(r => r.event_type === 'leave');
+
+    // KPIs
+    document.getElementById('tg-kpi-messages').textContent = msgs.length;
+    document.getElementById('tg-kpi-active').textContent = new Set(msgs.map(m => m.user_id).filter(Boolean)).size;
+    document.getElementById('tg-kpi-joins').textContent = joins.length;
+    document.getElementById('tg-kpi-leaves').textContent = leaves.length;
+
+    // Peak hours (converted to ICT = UTC+7)
+    const hourCounts = new Array(24).fill(0);
+    msgs.forEach(m => {
+      const d = new Date(m.occurred_at);
+      const ictHour = (d.getUTCHours() + 7) % 24;
+      hourCounts[ictHour]++;
+    });
+    drawTgHoursChart(hourCounts);
+
+    // Message volume trend (per ICT day)
+    const dayCounts = {};
+    msgs.forEach(m => {
+      const ict = new Date(new Date(m.occurred_at).getTime() + 7 * 60 * 60 * 1000);
+      const key = ict.toISOString().slice(0, 10);
+      dayCounts[key] = (dayCounts[key] || 0) + 1;
+    });
+    const dayKeys = Object.keys(dayCounts).sort();
+    drawTgTrendChart(dayKeys, dayKeys.map(k => dayCounts[k]));
+
+    // Most active members — ranked by distinct active days (avoids burst/spam skew)
+    const userDays = {};
+    const userInfo = {};
+    msgs.forEach(m => {
+      if (!m.user_id) return;
+      const ict = new Date(new Date(m.occurred_at).getTime() + 7 * 60 * 60 * 1000);
+      const dayKey = ict.toISOString().slice(0, 10);
+      if (!userDays[m.user_id]) userDays[m.user_id] = new Set();
+      userDays[m.user_id].add(dayKey);
+      if (!userInfo[m.user_id]) userInfo[m.user_id] = { name: m.display_name || (m.username ? '@'+m.username : 'User ' + m.user_id), username: m.username, total: 0 };
+      userInfo[m.user_id].total++;
+    });
+    const ranked = Object.entries(userDays)
+      .map(([uid, days]) => ({ activeDays: days.size, total: userInfo[uid].total, name: userInfo[uid].name, username: userInfo[uid].username }))
+      .sort((a, b) => b.activeDays - a.activeDays || b.total - a.total)
+      .slice(0, 15);
+    renderTgActiveTable(ranked);
+
+    // Recent join/leave activity
+    const joinLeave = [
+      ...joins.map(j => ({ ...j, _type: 'join' })),
+      ...leaves.map(l => ({ ...l, _type: 'leave' }))
+    ].sort((a, b) => new Date(b.occurred_at) - new Date(a.occurred_at)).slice(0, 20);
+    renderTgJoinLeave(joinLeave);
+
+  } catch (e) {
+    console.error(e);
+    showToast('Lỗi tải dữ liệu Telegram Analytics', 'error');
+  }
+}
+
+function drawTgHoursChart(hourCounts) {
+  const ctx = document.getElementById('chart-tg-hours').getContext('2d');
+  if (chartTgHours) chartTgHours.destroy();
+  chartTgHours = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: hourCounts.map((_, h) => h + 'h'),
+      datasets: [{
+        label: 'Tin nhắn',
+        data: hourCounts,
+        backgroundColor: 'rgba(139,92,246,0.75)',
+        borderRadius: 4,
+        borderSkipped: false,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { color: '#9d8ec7', font: { size: 10 } }, grid: { display: false } },
+        y: { ticks: { color: '#9d8ec7', font: { size: 11 } }, grid: { color: 'rgba(139,92,246,0.08)' }, beginAtZero: true }
+      }
+    }
+  });
+}
+
+function drawTgTrendChart(labels, values) {
+  const ctx = document.getElementById('chart-tg-trend').getContext('2d');
+  if (chartTgTrend) chartTgTrend.destroy();
+  chartTgTrend = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: labels.map(d => d.slice(5)),
+      datasets: [{
+        label: 'Tin nhắn / ngày',
+        data: values,
+        borderColor: 'rgba(167,139,250,1)',
+        backgroundColor: 'rgba(139,92,246,0.15)',
+        fill: true, tension: .3, pointRadius: 2,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { color: '#9d8ec7', font: { size: 10 } }, grid: { display: false } },
+        y: { ticks: { color: '#9d8ec7', font: { size: 11 } }, grid: { color: 'rgba(139,92,246,0.08)' }, beginAtZero: true }
+      }
+    }
+  });
+}
+
+function renderTgActiveTable(ranked) {
+  const tbody = document.getElementById('tg-active-tbody');
+  if (!ranked.length) {
+    tbody.innerHTML = '<tr><td colspan="5" class="empty"><div class="icon">📭</div><p>Chưa có dữ liệu</p></td></tr>';
+    return;
+  }
+  tbody.innerHTML = ranked.map((r, i) => `
+    <tr>
+      <td><span style="color:var(--text3)">${i+1}</span></td>
+      <td style="font-weight:600">${esc(r.name)}</td>
+      <td style="color:var(--text2)">${r.username ? '@'+esc(r.username) : '—'}</td>
+      <td><span class="badge badge-purple">${r.activeDays}</span></td>
+      <td>${r.total}</td>
+    </tr>
+  `).join('');
+}
+
+function renderTgJoinLeave(rows) {
+  const tbody = document.getElementById('tg-joinleave-tbody');
+  if (!rows.length) {
+    tbody.innerHTML = '<tr><td colspan="3" class="empty"><div class="icon">📭</div><p>Chưa có hoạt động</p></td></tr>';
+    return;
+  }
+  tbody.innerHTML = rows.map(r => {
+    const dt = r.occurred_at ? new Date(r.occurred_at).toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh', hour12: false }) : '—';
+    const name = r.display_name || (r.username ? '@'+r.username : 'User ' + r.user_id);
+    const badge = r._type === 'join'
+      ? '<span class="badge badge-green">➕ Tham gia</span>'
+      : '<span class="badge badge-red">➖ Rời nhóm</span>';
+    return `<tr>
+      <td style="white-space:nowrap;font-size:.82rem;color:var(--text2)">${dt}</td>
+      <td>${esc(name)}</td>
+      <td>${badge}</td>
+    </tr>`;
+  }).join('');
 }
 </script>
 
