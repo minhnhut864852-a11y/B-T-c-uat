@@ -209,7 +209,7 @@ section{padding:5rem 4rem;position:relative;}
 .newbie-tab-content.active{display:block;}
 
 /* Exchange cards */
-.exchange-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;}
+.exchange-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1.5rem;}
 .exchange-card{background:rgba(255,255,255,0.03);border:1px solid rgba(168,85,247,0.15);border-radius:20px;padding:2rem;text-align:center;transition:all 0.3s;}
 .exchange-card:hover{border-color:var(--purple-bright);transform:translateY(-4px);}
 .exchange-name{font-family:'Playfair Display',serif;font-size:1.8rem;font-weight:900;margin-bottom:0.8rem;}
