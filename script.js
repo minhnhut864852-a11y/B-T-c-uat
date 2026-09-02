@@ -158,6 +158,19 @@ function setLang(lang) {
   document.querySelectorAll('.lang-btn').forEach(btn => {
     btn.classList.toggle('active', btn.textContent.trim().toLowerCase() === lang);
   });
+
+  // EN-only elements (e.g. Partners/affiliate tab) — shown only in English
+  document.querySelectorAll('.en-only').forEach(el => {
+    el.style.display = (lang === 'en') ? '' : 'none';
+  });
+  // If switching back to VI while the EN-only Partners tab is active, fall back to P2P
+  if (lang === 'vi') {
+    const exContent = document.getElementById('ntab-exchanges');
+    if (exContent && exContent.classList.contains('active')) {
+      const p2pBtn = document.querySelectorAll('.newbie-tab-btn')[0];
+      if (p2pBtn) switchNewbieTab('p2p', p2pBtn);
+    }
+  }
 }
 
 // HAMBURGER
@@ -576,7 +589,7 @@ function updateDashboard() {
   const ySel = document.getElementById('filterYear');
   const mLabel = mSel.options[mSel.selectedIndex].text;
   const titleEl = document.getElementById('dashTitle');
-  const base = currentLang==='vi' ? 'Hiệu Suất Phân Tích Thị Trường BoToc' : 'BoToc Market Analysis Performance';
+  const base = currentLang==='vi' ? 'Hiệu Suất Phân Tích Thị Trường BoToc' : 'BoToc Performance';
   const suffix = y === -6 ? ' — 6 Tháng Gần Nhất' : (m===0 && y===0) ? '' : ` — ${m!==0?mLabel:''} ${y!==0?y:''}`.trim();
   titleEl.textContent = base + suffix;
 }
