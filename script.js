@@ -171,6 +171,12 @@ function setLang(lang) {
       if (p2pBtn) switchNewbieTab('p2p', p2pBtn);
     }
   }
+
+  // Re-filter/re-render the news grid for the newly selected language
+  if (_allNewsItems) {
+    _newsShownCount = 6;
+    renderNewsGrid();
+  }
 }
 
 // HAMBURGER
@@ -1690,6 +1696,66 @@ function scrollToAboutCol(colId) {
 
 // Store fetched news for modal lookup
 const _newsCache = {};
+let _allNewsItems  = null; // all items fetched from Supabase (up to 30), unfiltered
+let _newsShownCount = 6;   // how many of the current language's filtered items are revealed
+
+const NEWS_TAG_COLORS = {
+  'Phân Tích':  { bg:'rgba(139,92,246,0.12)', color:'#a78bfa', border:'rgba(139,92,246,0.3)' },
+  'Thị Trường': { bg:'rgba(96,165,250,0.12)',  color:'#60a5fa', border:'rgba(96,165,250,0.3)' },
+  'Tin Tức':    { bg:'rgba(52,211,153,0.12)',  color:'#34d399', border:'rgba(52,211,153,0.3)' },
+  'Kiến Thức':  { bg:'rgba(245,158,11,0.12)',  color:'#f59e0b', border:'rgba(245,158,11,0.3)' },
+  'Cộng Đồng':  { bg:'rgba(248,113,113,0.12)', color:'#f87171', border:'rgba(248,113,113,0.3)' },
+};
+
+// Renders the news grid for the CURRENT language: only posts with a title in that
+// language are shown (EN-only posts show only in EN, VI-only posts show only in VI).
+// Reveals _newsShownCount of the filtered list; the "More" button reveals more.
+function renderNewsGrid() {
+  const newsGrid = document.querySelector('#news .news-grid');
+  const moreBtn  = document.getElementById('news-more-btn');
+  if (!newsGrid || !_allNewsItems) return;
+
+  const isEn = document.documentElement.lang === 'en' ||
+               (document.querySelector('[data-vi]') && !document.querySelector('[data-vi]').textContent.match(/[\u00C0-\u024F\u1E00-\u1EFF]/));
+
+  const filtered = _allNewsItems.filter(item => isEn ? !!item.title_en : !!item.title_vi);
+  const visible  = filtered.slice(0, _newsShownCount);
+
+  newsGrid.innerHTML = visible.map(item => {
+    const tc = NEWS_TAG_COLORS[item.tag] || NEWS_TAG_COLORS['Phân Tích'];
+    const title   = isEn ? item.title_en : item.title_vi;
+    const excerpt = isEn ? (item.excerpt_en || '') : (item.excerpt_vi || '');
+    const imgStyle = item.cover_image
+      ? `background:url('${item.cover_image}') center/cover no-repeat;`
+      : 'background:linear-gradient(135deg,#0d0720,#2d1052);';
+    const dateStr = item.published_date
+      ? new Date(item.published_date).toLocaleDateString('vi-VN', { day:'2-digit', month:'2-digit', year:'numeric' })
+      : '';
+    return `
+      <div class="news-card" style="opacity:1;transform:none;position:relative">
+        ${cardShareHtml(title || '', item.cover_image || '', item.id || '', 'news')}
+        <div class="news-img" style="${imgStyle}min-height:185px;"></div>
+        <div class="news-body">
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <span class="news-tag" style="background:${tc.bg};color:${tc.color};border-color:${tc.border}">${item.tag || ''}</span>
+            <span class="news-date">${dateStr}</span>
+          </div>
+          <h3 class="news-title">${escHtml(title || '')}</h3>
+          <p class="news-excerpt">${escHtml(excerpt)}</p>
+          <div class="news-footer">
+            <a href="#" class="news-read" onclick="openNewsDetail('${item.id}');return false;">Đọc Thêm <span>→</span></a>
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+
+  if (moreBtn) moreBtn.style.display = (filtered.length > _newsShownCount) ? '' : 'none';
+}
+
+function showMoreNews() {
+  _newsShownCount += 6;
+  renderNewsGrid();
+}
 
 function openNewsDetail(id) {
   const item = _newsCache[id];
@@ -1848,14 +1914,6 @@ document.addEventListener('keydown', e => {
 async function loadDynamicContent() {
   if (!window.supabase || !_supabase) return;
 
-  const TAG_COLORS = {
-    'Phân Tích':  { bg:'rgba(139,92,246,0.12)', color:'#a78bfa', border:'rgba(139,92,246,0.3)' },
-    'Thị Trường': { bg:'rgba(96,165,250,0.12)',  color:'#60a5fa', border:'rgba(96,165,250,0.3)' },
-    'Tin Tức':    { bg:'rgba(52,211,153,0.12)',  color:'#34d399', border:'rgba(52,211,153,0.3)' },
-    'Kiến Thức':  { bg:'rgba(245,158,11,0.12)',  color:'#f59e0b', border:'rgba(245,158,11,0.3)' },
-    'Cộng Đồng':  { bg:'rgba(248,113,113,0.12)', color:'#f87171', border:'rgba(248,113,113,0.3)' },
-  };
-
   const EVENT_TYPE_LABELS  = { live:'Live Trading', workshop:'Workshop', ama:'AMA', exchange:'Sự Kiện Sàn', tribe:'Sự Kiện Bộ Tộc', other:'Khác' };
   const EVENT_TYPE_CLASSES = { live:'event-type-live', workshop:'event-type-workshop', ama:'event-type-ama', exchange:'event-type-exchange', tribe:'event-type-tribe', other:'event-type-other' };
 
@@ -1866,45 +1924,14 @@ async function loadDynamicContent() {
       .select('*')
       .eq('status', 'published')
       .order('published_date', { ascending: false })
-      .limit(6);
+      .limit(30);
 
     if (newsItems && newsItems.length > 0) {
-      const newsGrid = document.querySelector('#news .news-grid');
-      if (newsGrid) {
-        // Determine current language
-        const isEn = document.documentElement.lang === 'en' ||
-                     (document.querySelector('[data-vi]') && !document.querySelector('[data-vi]').textContent.match(/[\u00C0-\u024F\u1E00-\u1EFF]/));
-        // Cache all items for modal lookup
-        newsItems.forEach(item => { _newsCache[item.id] = item; });
-
-        newsGrid.innerHTML = newsItems.map(item => {
-          const tc = TAG_COLORS[item.tag] || TAG_COLORS['Phân Tích'];
-          const title   = isEn ? (item.title_en || item.title_vi) : (item.title_vi || item.title_en);
-          const excerpt = isEn ? (item.excerpt_en || item.excerpt_vi || '') : (item.excerpt_vi || item.excerpt_en || '');
-          const imgStyle = item.cover_image
-            ? `background:url('${item.cover_image}') center/cover no-repeat;`
-            : 'background:linear-gradient(135deg,#0d0720,#2d1052);';
-          const dateStr = item.published_date
-            ? new Date(item.published_date).toLocaleDateString('vi-VN', { day:'2-digit', month:'2-digit', year:'numeric' })
-            : '';
-          return `
-            <div class="news-card" style="opacity:1;transform:none;position:relative">
-              ${cardShareHtml(title || '', item.cover_image || '', item.id || '', 'news')}
-              <div class="news-img" style="${imgStyle}min-height:185px;"></div>
-              <div class="news-body">
-                <div style="display:flex;align-items:center;justify-content:space-between;">
-                  <span class="news-tag" style="background:${tc.bg};color:${tc.color};border-color:${tc.border}">${item.tag || ''}</span>
-                  <span class="news-date">${dateStr}</span>
-                </div>
-                <h3 class="news-title">${escHtml(title || '')}</h3>
-                <p class="news-excerpt">${escHtml(excerpt)}</p>
-                <div class="news-footer">
-                  <a href="#" class="news-read" onclick="openNewsDetail('${item.id}');return false;">Đọc Thêm <span>→</span></a>
-                </div>
-              </div>
-            </div>`;
-        }).join('');
-      }
+      // Cache all fetched items for modal lookup, regardless of language filter
+      newsItems.forEach(item => { _newsCache[item.id] = item; });
+      _allNewsItems   = newsItems;
+      _newsShownCount = 6;
+      renderNewsGrid();
     }
   } catch(e) { /* table may not exist yet — silently skip */ }
 
