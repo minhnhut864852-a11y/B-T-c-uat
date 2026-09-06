@@ -1384,7 +1384,7 @@ tr:hover td{background:rgba(139,92,246,0.04)}
     </div>
     <input type="hidden" id="nw-id">
     <div class="form-group">
-      <label>Tiêu Đề (Tiếng Việt) *</label>
+      <label>Tiêu Đề (Tiếng Việt)</label>
       <input type="text" id="nw-title-vi" placeholder="BTC phá vỡ vùng kháng cự $95K...">
     </div>
     <div class="form-group">
@@ -2254,7 +2254,7 @@ async function loadNews() {
   if (!data?.length) { tbody.innerHTML = '<tr><td colspan="5"><div class="empty"><div class="icon">📰</div><p>Chưa có bài viết nào. Nhấn "Thêm Bài Viết" để bắt đầu.</p></div></td></tr>'; return; }
   tbody.innerHTML = data.map(r => `
     <tr>
-      <td style="font-weight:600;max-width:260px">${esc(r.title_vi || '')}</td>
+      <td style="font-weight:600;max-width:260px">${esc(r.title_vi || r.title_en || '')}</td>
       <td><span class="badge badge-purple">${esc(r.tag || '—')}</span></td>
       <td style="font-size:.82rem;color:var(--text2)">${r.published_date ? fmtDateShort(r.published_date) : '—'}</td>
       <td>${r.status==='published' ? '<span class="badge badge-green">Đã Đăng</span>' : '<span class="badge badge-gray">Nháp</span>'}</td>
@@ -2304,11 +2304,12 @@ async function editNews(id) {
 
 async function saveNews() {
   const id = document.getElementById('nw-id').value;
-  const title_vi = document.getElementById('nw-title-vi').value.trim();
-  if (!title_vi) { showToast('Vui lòng nhập tiêu đề tiếng Việt', 'error'); return; }
+  const title_vi = document.getElementById('nw-title-vi').value.trim() || null;
+  const title_en = document.getElementById('nw-title-en').value.trim() || null;
+  if (!title_vi && !title_en) { showToast('Vui lòng nhập tiêu đề (Tiếng Việt hoặc Tiếng Anh)', 'error'); return; }
   const payload = {
     title_vi,
-    title_en:     document.getElementById('nw-title-en').value.trim() || null,
+    title_en,
     excerpt_vi:   document.getElementById('nw-excerpt-vi').value.trim() || null,
     excerpt_en:   document.getElementById('nw-excerpt-en').value.trim() || null,
     tag:          document.getElementById('nw-tag').value,

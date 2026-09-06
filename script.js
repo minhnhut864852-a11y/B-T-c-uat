@@ -1700,8 +1700,8 @@ function openNewsDetail(id) {
     article_title: (item.title_vi || item.title_en || '').slice(0, 100)
   });
   const isEn = document.documentElement.lang === 'en';
-  const title   = (isEn && item.title_en)   ? item.title_en   : item.title_vi;
-  const content = (isEn && item.content_en)  ? item.content_en : item.content_vi;
+  const title   = isEn ? (item.title_en || item.title_vi) : (item.title_vi || item.title_en);
+  const content = isEn ? (item.content_en || item.content_vi) : (item.content_vi || item.content_en);
   const tc = {
     'Phân Tích':  { bg:'rgba(139,92,246,0.15)', color:'#a78bfa', border:'rgba(139,92,246,0.3)' },
     'Thị Trường': { bg:'rgba(96,165,250,0.12)',  color:'#60a5fa', border:'rgba(96,165,250,0.3)' },
@@ -1879,8 +1879,8 @@ async function loadDynamicContent() {
 
         newsGrid.innerHTML = newsItems.map(item => {
           const tc = TAG_COLORS[item.tag] || TAG_COLORS['Phân Tích'];
-          const title   = isEn && item.title_en   ? item.title_en   : item.title_vi;
-          const excerpt = isEn && item.excerpt_en  ? item.excerpt_en : item.excerpt_vi || '';
+          const title   = isEn ? (item.title_en || item.title_vi) : (item.title_vi || item.title_en);
+          const excerpt = isEn ? (item.excerpt_en || item.excerpt_vi || '') : (item.excerpt_vi || item.excerpt_en || '');
           const imgStyle = item.cover_image
             ? `background:url('${item.cover_image}') center/cover no-repeat;`
             : 'background:linear-gradient(135deg,#0d0720,#2d1052);';
