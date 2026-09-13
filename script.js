@@ -177,6 +177,11 @@ function setLang(lang) {
     _newsShownCount = 6;
     renderNewsGrid();
   }
+
+  // Re-filter/re-render the daily-news carousel for the newly selected language
+  if (_allDnnItems && _allDnnItems.length) {
+    renderDnnForLang();
+  }
 }
 
 // HAMBURGER
@@ -2530,7 +2535,8 @@ function renderMacroWeek(weekKey) {
 // ══════════════════════════════════════════════════════════
 //  TIN TỨC HẰNG NGÀY  —  full-width carousel
 // ══════════════════════════════════════════════════════════
-var _dnnItems = [];
+var _dnnItems = [];    // items currently shown (already filtered to the active language)
+var _allDnnItems = []; // all items fetched from Supabase, unfiltered
 var _dnnIdx = 0;
 var _dnnModalIdx = 0;
 
@@ -2549,11 +2555,20 @@ async function loadDailyNews() {
       .order('news_date', { ascending: false })
       .limit(30);
     if (res.error) throw res.error;
-    _dnnItems = res.data || [];
-    renderDailyNews(_dnnItems);
+    _allDnnItems = res.data || [];
+    renderDnnForLang();
   } catch(e) {
     track.innerHTML = '<div class="dnn-empty">Không tải được tin tức.</div>';
   }
+}
+
+// Only show daily-news posts that have a title in the current language
+// (EN-only posts show only in EN, VI-only posts show only in VI) — same rule as the main News section.
+function renderDnnForLang() {
+  const isEn = document.documentElement.lang === 'en' ||
+               (document.querySelector('[data-vi]') && !document.querySelector('[data-vi]').textContent.match(/[\u00C0-\u024F\u1E00-\u1EFF]/));
+  _dnnItems = _allDnnItems.filter(function(item) { return isEn ? !!item.title_en : !!item.title; });
+  renderDailyNews(_dnnItems);
 }
 
 function renderDailyNews(items) {
@@ -2566,15 +2581,18 @@ function renderDailyNews(items) {
     if (dotsEl) dotsEl.innerHTML = '';
     return;
   }
+  var isEn = document.documentElement.lang === 'en' ||
+             (document.querySelector('[data-vi]') && !document.querySelector('[data-vi]').textContent.match(/[\u00C0-\u024F\u1E00-\u1EFF]/));
   track.innerHTML = items.map(function(item, idx) {
     var d = item.news_date ? new Date(item.news_date + 'T00:00:00') : null;
     var dateStr = d ? ('0'+d.getDate()).slice(-2)+'/'+('0'+(d.getMonth()+1)).slice(-2)+'/'+d.getFullYear() : '';
+    var title = isEn ? item.title_en : item.title;
     return '<div class="dnn-card" style="position:relative" onclick="openDnnModal('+idx+')" role="button" tabindex="0" draggable="false">'
-      + cardShareHtml(item.title || '', item.image_url || '', item.id || '', 'daily')
+      + cardShareHtml(title || '', item.image_url || '', item.id || '', 'daily')
       + '<img src="'+escHtml(item.image_url || '')+'" alt="" loading="lazy" draggable="false">'
       + '<div class="dnn-card-foot">'
       + '<div class="dnn-card-date">'+dateStr+'</div>'
-      + '<div class="dnn-card-ttl">'+escHtml(item.title || '')+'</div>'
+      + '<div class="dnn-card-ttl">'+escHtml(title || '')+'</div>'
       + '</div></div>';
   }).join('');
   if (dotsEl) {
@@ -2669,10 +2687,12 @@ function fillDnnModal(item, idx) {
   if (dateEl) dateEl.textContent = dateStr;
   var counterEl = document.getElementById('dnn-modal-counter');
   if (counterEl) counterEl.textContent = (idx + 1) + ' / ' + _dnnItems.length;
+  var isEnModal = document.documentElement.lang === 'en' ||
+                  (document.querySelector('[data-vi]') && !document.querySelector('[data-vi]').textContent.match(/[\u00C0-\u024F\u1E00-\u1EFF]/));
   var ttlEl = document.getElementById('dnn-modal-ttl');
-  if (ttlEl) ttlEl.textContent = item.title || '';
+  if (ttlEl) ttlEl.textContent = (isEnModal ? item.title_en : item.title) || '';
   var descEl = document.getElementById('dnn-modal-desc');
-  if (descEl) descEl.textContent = item.description || '';
+  if (descEl) descEl.textContent = (isEnModal ? item.description_en : item.description) || '';
   var linkEl = document.getElementById('dnn-modal-link');
   if (linkEl) {
     linkEl.href = item.source_url || '#';
