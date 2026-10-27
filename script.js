@@ -2828,7 +2828,8 @@ function renderKtPosts(cat) {
       ? '<div>' + p.tags.slice(0, 3).map(t => '<span class="kt-post-tag">#' + escHtml(t) + '</span>').join('') + '</div>'
       : '';
     return `
-      <div class="kt-card" onclick="openKtDetail('${escHtml(p.id)}')">
+      <div class="kt-card" style="position:relative" onclick="openKtDetail('${escHtml(p.id)}')">
+        ${cardShareHtml(p.title || '', p.cover_image || '', p.id || '', 'kt')}
         ${coverHtml}
         <div class="kt-card-body">
           <div><span class="kt-tag">${catLabel}</span>${pinBadge}</div>
