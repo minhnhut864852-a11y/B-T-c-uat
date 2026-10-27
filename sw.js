@@ -1,7 +1,9 @@
 // BoToc Trading — Service Worker
-// Cache-first for static assets; network-first for API/Supabase calls
+// Network-first for HTML/JS/CSS (so code updates always reach visitors);
+// cache-first for icons/manifest (rarely change, kept for offline/PWA use);
+// network-first for API/Supabase calls (always fresh data).
 
-const CACHE_NAME = 'botoc-v1';
+const CACHE_NAME = 'botoc-v2';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -11,6 +13,10 @@ const STATIC_ASSETS = [
   '/icon-192.png',
   '/icon-512.png'
 ];
+
+// Files that must always be fetched fresh when online — these are the
+// files that change on every deploy. Cache is only a fallback for offline use.
+const NETWORK_FIRST = ['/', '/index.html', '/style.css', '/script.js'];
 
 // Install: pre-cache static assets
 self.addEventListener('install', event => {
@@ -30,9 +36,6 @@ self.addEventListener('activate', event => {
   self.clients.claim();
 });
 
-// Fetch strategy:
-// - Supabase / external APIs → network-first (always fresh data)
-// - Everything else → cache-first with network fallback
 self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
 
@@ -49,7 +52,22 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // Cache-first for static assets
+  // Network-first for the core site files, so a new deploy is picked up
+  // on the very next load instead of waiting on this cache to expire.
+  if (url.origin === self.location.origin && NETWORK_FIRST.includes(url.pathname)) {
+    event.respondWith(
+      fetch(event.request).then(response => {
+        if (response && response.status === 200 && response.type !== 'opaque') {
+          const toCache = response.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(event.request, toCache));
+        }
+        return response;
+      }).catch(() => caches.match(event.request))
+    );
+    return;
+  }
+
+  // Cache-first for everything else (icons, manifest, images already covered above)
   event.respondWith(
     caches.match(event.request).then(cached => {
       if (cached) return cached;
