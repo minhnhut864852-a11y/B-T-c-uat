@@ -2587,9 +2587,10 @@ function renderDailyNews(items) {
     var d = item.news_date ? new Date(item.news_date + 'T00:00:00') : null;
     var dateStr = d ? ('0'+d.getDate()).slice(-2)+'/'+('0'+(d.getMonth()+1)).slice(-2)+'/'+d.getFullYear() : '';
     var title = isEn ? item.title_en : item.title;
+    var img = isEn ? (item.image_url_en || item.image_url) : item.image_url;
     return '<div class="dnn-card" style="position:relative" onclick="openDnnModal('+idx+')" role="button" tabindex="0" draggable="false">'
-      + cardShareHtml(title || '', item.image_url || '', item.id || '', 'daily')
-      + '<img src="'+escHtml(item.image_url || '')+'" alt="" loading="lazy" draggable="false">'
+      + cardShareHtml(title || '', img || '', item.id || '', 'daily')
+      + '<img src="'+escHtml(img || '')+'" alt="" loading="lazy" draggable="false">'
       + '<div class="dnn-card-foot">'
       + '<div class="dnn-card-date">'+dateStr+'</div>'
       + '<div class="dnn-card-ttl">'+escHtml(title || '')+'</div>'
@@ -2682,13 +2683,13 @@ function fillDnnModal(item, idx) {
   var d = item.news_date ? new Date(item.news_date + 'T00:00:00') : null;
   var dateStr = d ? ('0'+d.getDate()).slice(-2)+'/'+('0'+(d.getMonth()+1)).slice(-2)+'/'+d.getFullYear() : '';
   var imgEl = document.getElementById('dnn-modal-img');
-  if (imgEl) { imgEl.src = ''; imgEl.src = item.image_url || ''; }
   var dateEl = document.getElementById('dnn-modal-date');
   if (dateEl) dateEl.textContent = dateStr;
   var counterEl = document.getElementById('dnn-modal-counter');
   if (counterEl) counterEl.textContent = (idx + 1) + ' / ' + _dnnItems.length;
   var isEnModal = document.documentElement.lang === 'en' ||
                   (document.querySelector('[data-vi]') && !document.querySelector('[data-vi]').textContent.match(/[\u00C0-\u024F\u1E00-\u1EFF]/));
+  if (imgEl) { imgEl.src = ''; imgEl.src = (isEnModal ? (item.image_url_en || item.image_url) : item.image_url) || ''; }
   var ttlEl = document.getElementById('dnn-modal-ttl');
   if (ttlEl) ttlEl.textContent = (isEnModal ? item.title_en : item.title) || '';
   var descEl = document.getElementById('dnn-modal-desc');

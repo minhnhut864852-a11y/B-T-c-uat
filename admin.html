@@ -1495,7 +1495,7 @@ tr:hover td{background:rgba(139,92,246,0.04)}
       <input type="url" id="dnn-source-url" placeholder="https://...">
     </div>
     <div class="form-group">
-      <label>Ảnh *</label>
+      <label>Ảnh (Tiếng Việt) *</label>
       <div class="img-upload-wrap" id="dnn-img-wrap" onclick="document.getElementById('dnn-img-file').click()">
         <div class="img-upload-placeholder" id="dnn-img-placeholder">
           <img src="icon_image.svg" class="img-upload-svg" alt="">
@@ -1508,6 +1508,21 @@ tr:hover td{background:rgba(139,92,246,0.04)}
         onchange="handleImageUpload(this,'dnn-image','dnn-img-preview','dnn-img-placeholder','dnn-upload-status')">
       <div id="dnn-upload-status" style="font-size:.8rem;margin-top:.4rem;color:var(--text2)"></div>
       <input type="hidden" id="dnn-image">
+    </div>
+    <div class="form-group">
+      <label>Ảnh (Tiếng Anh) <span style="font-weight:400;color:var(--text3)">(tuỳ chọn — nếu bỏ trống sẽ dùng ảnh Tiếng Việt)</span></label>
+      <div class="img-upload-wrap" id="dnn-img-wrap-en" onclick="document.getElementById('dnn-img-file-en').click()">
+        <div class="img-upload-placeholder" id="dnn-img-placeholder-en">
+          <img src="icon_image.svg" class="img-upload-svg" alt="">
+          <span>Click to choose image</span>
+          <span style="font-size:.75rem;color:var(--text3)">JPG, PNG, WEBP — max 5MB</span>
+        </div>
+        <img id="dnn-img-preview-en" style="display:none;width:100%;height:160px;object-fit:cover;border-radius:8px">
+      </div>
+      <input type="file" id="dnn-img-file-en" accept="image/*" style="display:none"
+        onchange="handleImageUpload(this,'dnn-image-en','dnn-img-preview-en','dnn-img-placeholder-en','dnn-upload-status-en')">
+      <div id="dnn-upload-status-en" style="font-size:.8rem;margin-top:.4rem;color:var(--text2)"></div>
+      <input type="hidden" id="dnn-image-en">
     </div>
     <div class="form-actions">
       <button class="btn-secondary" onclick="closeDailyNewsModal()">Hủy</button>
@@ -2396,8 +2411,11 @@ function openDailyNewsModal(data) {
   document.getElementById('dnn-source-url').value  = data?.source_url || '';
   document.getElementById('dnn-status').value      = data?.status || 'published';
   document.getElementById('dnn-image').value       = data?.image_url || '';
+  document.getElementById('dnn-image-en').value    = data?.image_url_en || '';
   resetImageWidget('dnn-img-preview','dnn-img-placeholder','dnn-image','dnn-upload-status','dnn-img-file');
+  resetImageWidget('dnn-img-preview-en','dnn-img-placeholder-en','dnn-image-en','dnn-upload-status-en','dnn-img-file-en');
   if (data?.image_url) restoreImagePreview(data.image_url,'dnn-img-preview','dnn-img-placeholder');
+  if (data?.image_url_en) restoreImagePreview(data.image_url_en,'dnn-img-preview-en','dnn-img-placeholder-en');
   modal.classList.add('open');
 }
 
@@ -2414,14 +2432,16 @@ async function saveDailyNews() {
   const id        = document.getElementById('dnn-id').value;
   const title     = document.getElementById('dnn-title').value.trim() || null;
   const title_en  = document.getElementById('dnn-title-en').value.trim() || null;
-  const image_url = document.getElementById('dnn-image').value.trim();
+  const image_url    = document.getElementById('dnn-image').value.trim();
+  const image_url_en = document.getElementById('dnn-image-en').value.trim();
   if (!title && !title_en) { showToast('Vui lòng nhập tiêu đề (Tiếng Việt hoặc Tiếng Anh)', 'error'); return; }
-  if (!image_url) { showToast('Vui lòng upload ảnh', 'error'); return; }
+  if (!image_url) { showToast('Vui lòng upload ảnh (Tiếng Việt)', 'error'); return; }
   const payload = {
     news_date:   document.getElementById('dnn-date').value || null,
     title,
     title_en,
     image_url,
+    image_url_en: image_url_en || null,
     description:    document.getElementById('dnn-description').value.trim() || null,
     description_en: document.getElementById('dnn-description-en').value.trim() || null,
     source_url:   document.getElementById('dnn-source-url').value.trim() || null,
