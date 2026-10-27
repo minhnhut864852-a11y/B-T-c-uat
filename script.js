@@ -2859,13 +2859,9 @@ function openKtDetail(id) {
 
   let mediaHtml = '';
   if (post.youtube_url) {
-    const ytId = _ktExtractYtId(post.youtube_url);
-    if (ytId) {
-      mediaHtml = `<div style="position:relative;padding-bottom:56.25%;height:0;margin-bottom:1.5rem;border-radius:12px;overflow:hidden">
-        <iframe src="https://www.youtube.com/embed/${ytId}" style="position:absolute;inset:0;width:100%;height:100%;border:none" allowfullscreen loading="lazy"></iframe>
-      </div>`;
-    }
-  } else if (post.cover_image) {
+    mediaHtml = _ktVideoEmbedHtml(post.youtube_url);
+  }
+  if (!mediaHtml && post.cover_image) {
     mediaHtml = `<img src="${escHtml(post.cover_image)}" alt="" style="width:100%;max-height:320px;object-fit:cover;border-radius:12px;margin-bottom:1.5rem" onerror="this.style.display='none'" loading="lazy">`;
   }
 
@@ -2934,6 +2930,48 @@ function closeKtDetail() {
 function _ktExtractYtId(url) {
   const m = (url || '').match(/(?:v=|youtu\.be\/|embed\/)([A-Za-z0-9_-]{11})/);
   return m ? m[1] : null;
+}
+
+function _ktExtractTiktokId(url) {
+  const m = (url || '').match(/tiktok\.com\/.*\/video\/(\d+)/);
+  return m ? m[1] : null;
+}
+
+function _ktIsTiktokUrl(url) {
+  return /tiktok\.com/i.test(url || '');
+}
+
+var _ktTiktokEmbedScriptLoaded = false;
+function _ktLoadTiktokEmbedScript() {
+  if (_ktTiktokEmbedScriptLoaded) return;
+  _ktTiktokEmbedScriptLoaded = true;
+  var s = document.createElement('script');
+  s.async = true;
+  s.src = 'https://www.tiktok.com/embed.js';
+  document.body.appendChild(s);
+}
+
+// "Video Link" field accepts YouTube or TikTok. Returns embed HTML for either,
+// or a plain "watch video" link as a last resort so a link is never silently dropped.
+function _ktVideoEmbedHtml(url) {
+  var ytId = _ktExtractYtId(url);
+  if (ytId) {
+    return '<div style="position:relative;padding-bottom:56.25%;height:0;margin-bottom:1.5rem;border-radius:12px;overflow:hidden">'
+      + '<iframe src="https://www.youtube.com/embed/' + ytId + '" style="position:absolute;inset:0;width:100%;height:100%;border:none" allowfullscreen loading="lazy"></iframe>'
+      + '</div>';
+  }
+  if (_ktIsTiktokUrl(url)) {
+    _ktLoadTiktokEmbedScript();
+    if (window.tiktokEmbed && typeof window.tiktokEmbed.lib !== 'undefined') {
+      // Script already present from an earlier post view — ask it to re-scan new blockquotes.
+      setTimeout(function() { try { window.tiktokEmbed.lib.render(document.querySelectorAll('.tiktok-embed')); } catch(e) {} }, 0);
+    }
+    var tkId = _ktExtractTiktokId(url);
+    return '<blockquote class="tiktok-embed" cite="' + escHtml(url) + '"' + (tkId ? ' data-video-id="' + tkId + '"' : '')
+      + ' style="max-width:605px;min-width:325px;margin:0 auto 1.5rem;border-radius:12px;overflow:hidden"><section></section></blockquote>';
+  }
+  // Not a recognized YouTube/TikTok link — don't drop it silently, show a plain link instead.
+  return '<a href="' + escHtml(url) + '" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:.4rem;margin-bottom:1.5rem;font-size:.9rem;color:#a78bfa;text-decoration:none;border:1px solid rgba(139,92,246,.35);border-radius:20px;padding:.5rem 1rem">▶️ Xem video</a>';
 }
 
 // Escapes the post body first (so no raw HTML/script from user input ever runs), then turns our
