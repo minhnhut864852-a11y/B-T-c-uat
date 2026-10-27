@@ -1537,6 +1537,12 @@ section.hero {
         <div>
           <label class="kt-form-label">Nội dung <span style="color:#f87171">*</span></label>
           <textarea id="kt-w-content" class="kt-form-input kt-form-textarea" style="min-height:170px" placeholder="Viết nội dung bài viết tại đây..."></textarea>
+          <div style="display:flex;align-items:center;gap:.6rem;margin-top:.5rem">
+            <button type="button" onclick="document.getElementById('kt-w-content-img-file').click()"
+              style="background:rgba(139,92,246,.1);border:1px solid rgba(139,92,246,.3);color:#c4b5d9;padding:.35rem .8rem;border-radius:20px;font-size:.78rem;cursor:pointer;font-family:inherit">🖼️ Chèn ảnh vào nội dung</button>
+            <span id="kt-w-content-img-status" style="font-size:.76rem;color:rgba(196,181,253,.5)"></span>
+          </div>
+          <input type="file" id="kt-w-content-img-file" accept="image/*" style="display:none" onchange="ktInsertContentImage(this)">
         </div>
         <div>
           <label class="kt-form-label">Ảnh bìa <span style="color:rgba(196,181,253,.4)">(tuỳ chọn)</span></label>

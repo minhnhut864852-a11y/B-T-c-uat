@@ -1284,7 +1284,7 @@ function setMemberLoggedOut() {
   if (mobJoin)   mobJoin.style.removeProperty('display');
   if (mobLogin)  mobLogin.style.setProperty('display','flex','important');
   if (mobMember) mobMember.style.setProperty('display','none','important');
-  hideKnowledgeSection();
+  // Crypto Knowledge stays readable after logout — only posting requires login (see openKtWrite).
   const lawWrap = document.getElementById('law-float-wrap');
   if (lawWrap) lawWrap.style.display = 'none';
   closeLawChat();
@@ -2748,6 +2748,7 @@ function closeDnnModal() {
 
 document.addEventListener('DOMContentLoaded', function() {
   loadDailyNews();
+  initKnowledgeSection(); // reading Crypto Knowledge no longer requires login; posting still does
 });
 
 /* ── Kiến Thức Crypto constants ── */
@@ -2887,7 +2888,7 @@ function openKtDetail(id) {
       <span>📅 ${date}</span>
     </div>
     ${post.excerpt ? `<p style="color:rgba(196,181,253,.72);font-size:.9rem;line-height:1.6;margin:0 0 1.5rem;padding:.9rem 1rem;background:rgba(139,92,246,.08);border-left:3px solid rgba(139,92,246,.5);border-radius:0 8px 8px 0">${escHtml(post.excerpt)}</p>` : ''}
-    <div style="color:rgba(196,181,253,.82);font-size:.9rem;line-height:1.9;white-space:pre-wrap;margin-bottom:1.5rem">${escHtml(post.content || '')}</div>
+    <div style="color:rgba(196,181,253,.82);font-size:.9rem;line-height:1.9;white-space:pre-wrap;margin-bottom:1.5rem">${_ktRenderContent(post.content)}</div>
     ${tagsHtml}
     ${_ktRelatedHtml(post)}`;
 
@@ -2934,7 +2935,19 @@ function _ktExtractYtId(url) {
   return m ? m[1] : null;
 }
 
-function openKtWrite() {
+// Escapes the post body first (so no raw HTML/script from user input ever runs), then turns our
+// own inline-image markers (![](url), inserted only via ktInsertContentImage's upload flow) into
+// real <img> tags. Anything else in the text stays plain escaped text.
+function _ktRenderContent(content) {
+  const escaped = escHtml(content || '');
+  return escaped.replace(/!\[\]\((https?:\/\/[^\s)]+)\)/g,
+    '<img src="$1" alt="" loading="lazy" style="max-width:100%;border-radius:10px;margin:.75rem 0;display:block">');
+}
+
+async function openKtWrite() {
+  // Posting still requires login even though reading no longer does.
+  const { data: { session } } = await window._supabase.auth.getSession();
+  if (!session) { openMemberLogin(); return; }
   ['kt-w-title','kt-w-excerpt','kt-w-content','kt-w-cover','kt-w-yt','kt-w-tags'].forEach(id => {
     const el = document.getElementById(id); if (el) el.value = '';
   });
@@ -2984,6 +2997,44 @@ async function ktUploadCover(input) {
   if (preview) { preview.src = publicUrl; preview.style.display = 'block'; }
   if (placeholder) placeholder.style.display = 'none';
   if (statusEl) statusEl.textContent = '✅ Ảnh đã tải lên thành công';
+}
+
+// Uploads an image and inserts a reference at the cursor position in the content textarea,
+// so writers can place images inline within the article body (not just the single cover image).
+async function ktInsertContentImage(input) {
+  const file = input.files[0];
+  if (!file) return;
+  if (file.size > 5 * 1024 * 1024) { alert('Ảnh quá lớn — tối đa 5MB'); return; }
+  if (!window._supabase) { alert('Lỗi kết nối Supabase'); return; }
+  const { data: { session } } = await window._supabase.auth.getSession();
+  const statusEl = document.getElementById('kt-w-content-img-status');
+  if (!session) {
+    if (statusEl) statusEl.textContent = '❌ Vui lòng đăng nhập để upload ảnh';
+    return;
+  }
+  if (statusEl) statusEl.textContent = '⏳ Đang tải ảnh lên...';
+  const ext  = file.name.split('.').pop().toLowerCase();
+  const path = `kt-content/${Date.now()}.${ext}`;
+  const { error } = await window._supabase.storage
+    .from('media')
+    .upload(path, file, { cacheControl: '3600', upsert: true });
+  if (error) {
+    if (statusEl) statusEl.textContent = '❌ Lỗi: ' + error.message;
+    return;
+  }
+  const { data: { publicUrl } } = window._supabase.storage.from('media').getPublicUrl(path);
+  const textarea = document.getElementById('kt-w-content');
+  const marker = '\n![](' + publicUrl + ')\n';
+  if (textarea) {
+    const start = textarea.selectionStart ?? textarea.value.length;
+    const end   = textarea.selectionEnd   ?? textarea.value.length;
+    textarea.value = textarea.value.slice(0, start) + marker + textarea.value.slice(end);
+    const newPos = start + marker.length;
+    textarea.focus();
+    textarea.setSelectionRange(newPos, newPos);
+  }
+  input.value = '';
+  if (statusEl) statusEl.textContent = '✅ Đã chèn ảnh vào nội dung';
 }
 
 function closeKtWrite() {
