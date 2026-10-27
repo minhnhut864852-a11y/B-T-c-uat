@@ -1448,6 +1448,7 @@ section.hero {
 .kt-card-excerpt{font-size:.8rem;color:rgba(196,181,253,.6);line-height:1.5;flex:1}
 .kt-card-meta{font-size:.72rem;color:rgba(196,181,253,.38);display:flex;justify-content:space-between;padding-top:.5rem;border-top:1px solid rgba(139,92,246,.1);margin-top:auto}
 .kt-pin-badge{display:inline-block;background:rgba(251,191,36,.15);color:#fbbf24;border-radius:3px;font-size:.65rem;padding:.1rem .35rem;margin-left:.3rem;font-weight:700}
+.kt-post-tag{display:inline-block;font-size:.68rem;padding:.15rem .55rem;border-radius:12px;background:rgba(139,92,246,.08);color:rgba(196,181,253,.65);margin:0 .3rem .3rem 0}
 .kt-modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:5000;overflow-y:auto;padding:2rem 1rem}
 .kt-modal-box{max-width:740px;margin:0 auto;background:#120c2a;border:1px solid rgba(139,92,246,.3);border-radius:20px;overflow:hidden;position:relative}
 .kt-modal-close{position:absolute;top:1rem;right:1rem;background:rgba(255,255,255,.07);border:none;color:#c4b5d9;width:34px;height:34px;border-radius:50%;font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:10;transition:background .15s}
@@ -1528,6 +1529,10 @@ section.hero {
         <div>
           <label class="kt-form-label">Tóm tắt ngắn <span style="color:#f87171">*</span></label>
           <textarea id="kt-w-excerpt" class="kt-form-input kt-form-textarea" style="min-height:70px" placeholder="1–2 câu mô tả nội dung bài viết..."></textarea>
+        </div>
+        <div>
+          <label class="kt-form-label">Tags <span style="color:rgba(196,181,253,.4)">(tuỳ chọn — cách nhau bằng dấu phẩy)</span></label>
+          <input id="kt-w-tags" class="kt-form-input" type="text" placeholder="vd: bitcoin, futures, defi">
         </div>
         <div>
           <label class="kt-form-label">Nội dung <span style="color:#f87171">*</span></label>

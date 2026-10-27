@@ -2823,12 +2823,16 @@ function renderKtPosts(cat) {
     const pinBadge = p.pinned ? '<span class="kt-pin-badge">📌</span>' : '';
     const date = p.created_at ? new Date(p.created_at).toLocaleDateString('vi-VN') : '';
     const catLabel = escHtml(KT_CAT_LABELS[p.category] || p.category);
+    const tagsHtml = (p.tags && p.tags.length)
+      ? '<div>' + p.tags.slice(0, 3).map(t => '<span class="kt-post-tag">#' + escHtml(t) + '</span>').join('') + '</div>'
+      : '';
     return `
       <div class="kt-card" onclick="openKtDetail('${escHtml(p.id)}')">
         ${coverHtml}
         <div class="kt-card-body">
           <div><span class="kt-tag">${catLabel}</span>${pinBadge}</div>
           <p class="kt-card-title">${escHtml(p.title)}</p>
+          ${tagsHtml}
           <p class="kt-card-excerpt">${escHtml((p.excerpt || '').substring(0, 120))}${(p.excerpt||'').length > 120 ? '…' : ''}</p>
           <div class="kt-card-meta">
             <span>👤 ${escHtml(p.author_name || 'Member')}</span>
@@ -2868,6 +2872,9 @@ function openKtDetail(id) {
     : '';
   const catLabel = escHtml(KT_CAT_LABELS[post.category] || post.category);
   const pinBadge = post.pinned ? '<span class="kt-pin-badge" style="margin-left:.5rem">📌 Ghim</span>' : '';
+  const tagsHtml = (post.tags && post.tags.length)
+    ? '<div style="margin-bottom:1.25rem">' + post.tags.map(t => '<span class="kt-post-tag">#' + escHtml(t) + '</span>').join('') + '</div>'
+    : '';
 
   inner.innerHTML = `
     ${mediaHtml}
@@ -2880,10 +2887,40 @@ function openKtDetail(id) {
       <span>📅 ${date}</span>
     </div>
     ${post.excerpt ? `<p style="color:rgba(196,181,253,.72);font-size:.9rem;line-height:1.6;margin:0 0 1.5rem;padding:.9rem 1rem;background:rgba(139,92,246,.08);border-left:3px solid rgba(139,92,246,.5);border-radius:0 8px 8px 0">${escHtml(post.excerpt)}</p>` : ''}
-    <div style="color:rgba(196,181,253,.82);font-size:.9rem;line-height:1.9;white-space:pre-wrap">${escHtml(post.content || '')}</div>`;
+    <div style="color:rgba(196,181,253,.82);font-size:.9rem;line-height:1.9;white-space:pre-wrap;margin-bottom:1.5rem">${escHtml(post.content || '')}</div>
+    ${tagsHtml}
+    ${_ktRelatedHtml(post)}`;
 
   const overlay = document.getElementById('kt-detail-overlay');
   if (overlay) { overlay.style.display = 'block'; document.body.style.overflow = 'hidden'; }
+}
+
+// Suggest other published posts: prioritize shared tags, fall back to same category.
+function _ktRelatedHtml(post) {
+  const others = (_ktAllPosts || []).filter(p => p.id !== post.id);
+  if (!others.length) return '';
+  const postTags = post.tags || [];
+  const scored = others.map(p => {
+    const shared = postTags.length && p.tags ? p.tags.filter(t => postTags.includes(t)).length : 0;
+    const sameCat = p.category === post.category ? 1 : 0;
+    return { p, score: shared * 10 + sameCat };
+  }).filter(x => x.score > 0);
+  scored.sort((a, b) => b.score - a.score || new Date(b.p.created_at) - new Date(a.p.created_at));
+  const related = scored.slice(0, 3).map(x => x.p);
+  if (!related.length) return '';
+  const cards = related.map(p => {
+    const cov = p.cover_image
+      ? `<img src="${escHtml(p.cover_image)}" alt="" style="width:56px;height:56px;object-fit:cover;border-radius:8px;flex-shrink:0" loading="lazy">`
+      : `<div style="width:56px;height:56px;border-radius:8px;flex-shrink:0;background:linear-gradient(135deg,rgba(139,92,246,.15),rgba(79,70,229,.1));display:flex;align-items:center;justify-content:center;font-size:1.3rem">${KT_CAT_EMOJI[p.category] || '📝'}</div>`;
+    return `<div onclick="openKtDetail('${escHtml(p.id)}')" style="display:flex;gap:.75rem;align-items:center;padding:.6rem;border-radius:10px;cursor:pointer;background:rgba(255,255,255,.03);border:1px solid rgba(139,92,246,.12)" onmouseover="this.style.borderColor='rgba(139,92,246,.4)'" onmouseout="this.style.borderColor='rgba(139,92,246,.12)'">
+      ${cov}
+      <span style="font-size:.84rem;color:#e2d9f3;line-height:1.35;font-weight:600">${escHtml(p.title)}</span>
+    </div>`;
+  }).join('');
+  return `<div style="margin-top:1.5rem;padding-top:1.5rem;border-top:1px solid rgba(139,92,246,.15)">
+    <div style="font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:rgba(196,181,253,.5);margin-bottom:.75rem">Bài Viết Liên Quan</div>
+    <div style="display:flex;flex-direction:column;gap:.5rem">${cards}</div>
+  </div>`;
 }
 
 function closeKtDetail() {
@@ -2898,7 +2935,7 @@ function _ktExtractYtId(url) {
 }
 
 function openKtWrite() {
-  ['kt-w-title','kt-w-excerpt','kt-w-content','kt-w-cover','kt-w-yt'].forEach(id => {
+  ['kt-w-title','kt-w-excerpt','kt-w-content','kt-w-cover','kt-w-yt','kt-w-tags'].forEach(id => {
     const el = document.getElementById(id); if (el) el.value = '';
   });
   const cat = document.getElementById('kt-w-cat'); if (cat) cat.value = '';
@@ -2962,6 +2999,8 @@ async function submitKtPost() {
   const content = (document.getElementById('kt-w-content')?.value || '').trim();
   const cover   = (document.getElementById('kt-w-cover')?.value   || '').trim();
   const yt      = (document.getElementById('kt-w-yt')?.value      || '').trim();
+  const tags    = (document.getElementById('kt-w-tags')?.value    || '')
+                    .split(',').map(t => t.trim()).filter(Boolean).slice(0, 10);
   const errEl   =  document.getElementById('kt-w-error');
   const btn     =  document.getElementById('kt-w-submit');
 
@@ -2986,6 +3025,7 @@ async function submitKtPost() {
       content,
       cover_image: cover || null,
       youtube_url: yt    || null,
+      tags:        tags,
       author_id:   session.user.id,
       author_name: authorName,
       status:      'pending',
